@@ -4,7 +4,7 @@ import numpy as np
 from dncnn.trainer import TrainerDnCNN, load_model
 
 
-dncnn_root = Path("/content/MSIS_Capstone_Team1/dncnn")
+dncnn_root = Path("./dncnn")
 
 def load_denoiser(device: str, trainable:bool=False)-> torch.nn.Module:
 
