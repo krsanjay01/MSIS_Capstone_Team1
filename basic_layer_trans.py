@@ -17,7 +17,7 @@ class SelfAttention(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
         self.proj = nn.Conv2d(in_dim, in_dim, kernel_size=1)
         self.dropout = nn.Dropout(dropout)
-        self.norm = nn.LayerNorm([in_dim, 1, 1])
+        self.norm = nn.BatchNorm2d(in_dim)  # Use BatchNorm2d instead of LayerNorm
 
     def forward(self, x):
         b, c, h, w = x.size()
@@ -36,6 +36,7 @@ class SelfAttention(nn.Module):
         out = self.norm(out + x)
 
         return out
+
 
 
 # Conv_Layer remains unchanged except for padding placement
