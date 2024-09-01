@@ -398,7 +398,8 @@ class TrainerSingle(nn.Module):
         # Model initialization
         self.AE = model.Unet(self.device, self.ch_i, self.ch_o, self.arch,
                              activ='leak', depth=self.depth, concat=self.concat).to(self.device)
-        self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
+        #self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
+        self.optimizer = optim.RMSprop(self.AE.parameters(), lr=self.init_lr,)
 
         self.loss_mse = nn.MSELoss()
 
