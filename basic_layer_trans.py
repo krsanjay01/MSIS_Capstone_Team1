@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 # SelfAttention Module
 class SelfAttention(nn.Module):
     def __init__(self, in_dim, heads=8, dropout=0.0):
@@ -39,121 +38,85 @@ class SelfAttention(nn.Module):
         return out
 
 
-# Conv_Layer remains unchanged
+# Conv_Layer remains unchanged except for padding placement
 class Conv_Layer(nn.Module):
-    def __init__(self, in_c, out_c, kernel, stride,
-                 padding=0, dilation=1, bias=True, activ=None, norm=None,
-                 pool=None):
+    def __init__(self, in_c, out_c, kernel, stride, padding=0,
+                 dilation=1, bias=True, activ=None, norm=None):
         super(Conv_Layer, self).__init__()
-        self.conv = nn.Sequential()
-        self.conv.add_module('conv', nn.Conv2d(in_c, out_c, kernel_size=kernel,
-                                               stride=stride, dilation=dilation, padding=padding, bias=bias))
+        self.conv = nn.Conv2d(in_c, out_c, kernel_size=kernel,
+                              stride=stride, dilation=dilation, padding=padding, bias=bias)
+
+        layers = [self.conv]
+
+        if norm == 'bn':
+            layers.append(nn.BatchNorm2d(out_c))
+        elif norm == 'ln':
+            layers.append(nn.LayerNorm([out_c, 1, 1]))
 
         if activ == 'leak':
-            activ = nn.LeakyReLU(inplace=True)
+            layers.append(nn.LeakyReLU(inplace=True))
         elif activ == 'relu':
-            activ = nn.ReLU(inplace=True)
+            layers.append(nn.ReLU(inplace=True))
         elif activ == 'pleak':
-            activ = nn.PReLU()
+            layers.append(nn.PReLU())
         elif activ == 'gelu':
-            activ = nn.GELU()
+            layers.append(nn.GELU())
         elif activ == 'selu':
-            activ = nn.SELU()
+            layers.append(nn.SELU())
         elif activ == 'sigmoid':
-            activ = nn.Sigmoid()
+            layers.append(nn.Sigmoid())
         elif activ == 'softmax':
-            activ = nn.Softmax(dim=1)
+            layers.append(nn.Softmax(dim=1))
         elif activ == 'tanh':
-            activ = nn.Tanh()
-        else:
-            activ = None
+            layers.append(nn.Tanh())
 
-        if norm == 'bn':
-            norm = nn.BatchNorm2d(out_c)
-        elif norm == 'ln':
-            norm = nn.LayerNorm([out_c, 1, 1])
-        else:
-            norm = None
-
-        if pool == 'max':
-            pool = nn.MaxPool2d(2, 2)
-        elif pool == 'avg':
-            pool = nn.AvgPool2d(2, 2)
-        else:
-            pool = None
-
-        if norm is not None:
-            self.conv.add_module('norm', norm)
-
-        if activ is not None:
-            self.conv.add_module('activ', activ)
-
-        if pool is not None:
-            self.conv.add_module('pool', pool)
+        self.conv = nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.conv(x)
-        return x
+        return self.conv(x)
 
 
-# DeConv_Layer remains unchanged
+# DeConv_Layer remains unchanged except for padding placement
 class DeConv_Layer(nn.Module):
-    def __init__(self, in_c, out_c, kernel, stride,
-                 padding=0, activ=None, norm=None,
-                 pool=None, bias=True):
+    def __init__(self, in_c, out_c, kernel, stride, padding=0,
+                 activ=None, norm=None, bias=True):
         super(DeConv_Layer, self).__init__()
-        self.deconv = nn.Sequential()
-        self.deconv.add_module('deconv', nn.ConvTranspose2d(in_c, out_c, kernel_size=kernel,
-                                                            stride=stride, padding=padding, bias=bias))
+        self.deconv = nn.ConvTranspose2d(in_c, out_c, kernel_size=kernel,
+                                         stride=stride, padding=padding, bias=bias)
+
+        layers = [self.deconv]
+
+        if norm == 'bn':
+            layers.append(nn.BatchNorm2d(out_c))
+        elif norm == 'ln':
+            layers.append(nn.LayerNorm([out_c, 1, 1]))
 
         if activ == 'leak':
-            activ = nn.LeakyReLU(inplace=True)
+            layers.append(nn.LeakyReLU(inplace=True))
         elif activ == 'relu':
-            activ = nn.ReLU(inplace=True)
+            layers.append(nn.ReLU(inplace=True))
         elif activ == 'pleak':
-            activ = nn.PReLU()
+            layers.append(nn.PReLU())
         elif activ == 'gelu':
-            activ = nn.GELU()
+            layers.append(nn.GELU())
         elif activ == 'selu':
-            activ = nn.SELU()
+            layers.append(nn.SELU())
         elif activ == 'sigmoid':
-            activ = nn.Sigmoid()
+            layers.append(nn.Sigmoid())
         elif activ == 'softmax':
-            activ = nn.Softmax(dim=1)
-        else:
-            activ = None
+            layers.append(nn.Softmax(dim=1))
+        elif activ == 'tanh':
+            layers.append(nn.Tanh())
 
-        if norm == 'bn':
-            norm = nn.BatchNorm2d(out_c)
-        elif norm == 'ln':
-            norm = nn.LayerNorm([out_c, 1, 1])
-        else:
-            norm = None
-
-        if pool == 'max':
-            pool = nn.MaxPool2d(2, 2)
-        elif pool == 'avg':
-            pool = nn.AvgPool2d(2, 2)
-        else:
-            pool = None
-
-        if norm is not None:
-            self.deconv.add_module('norm', norm)
-
-        if activ is not None:
-            self.deconv.add_module('activ', activ)
-
-        if pool is not None:
-            self.deconv.add_module('pool', pool)
+        self.deconv = nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.deconv(x)
-        return x
+        return self.deconv(x)
 
 
 # Updated Conv_Block with optional Self-Attention
 class Conv_Block(nn.Module):
-    def __init__(self, in_c, out_c, activ=None, pool=None, norm='bn', use_transformer=False, embed_size=256, num_heads=8, num_layers=6):
+    def __init__(self, in_c, out_c, activ=None, pool=None, norm='bn', use_transformer=False, embed_size=256, num_heads=8):
         super(Conv_Block, self).__init__()
         self.c1 = Conv_Layer(in_c, out_c, 3, 1, activ=activ, norm=norm, padding=1)
         self.c2 = Conv_Layer(out_c, out_c, 3, 1, activ=activ, norm=norm, padding=1)
@@ -161,14 +124,14 @@ class Conv_Block(nn.Module):
         # Transformer Block (optional)
         self.use_transformer = use_transformer
         if use_transformer:
-            self.transformer = SelfAttention(embed_size=embed_size, num_heads=num_heads, num_layers=num_layers)
+            self.transformer = SelfAttention(in_dim=out_c, heads=num_heads, dropout=0.1)
 
         if pool == 'up_stride':
             self.pool = DeConv_Layer(out_c, out_c, 2, 2, norm=norm)
         elif pool == 'up_bilinear':
-            self.pool = nn.Upsample(scale_factor=2, mode=pool[3:], align_corners=True)
+            self.pool = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         elif pool == 'up_nearest':
-            self.pool = nn.Upsample(scale_factor=2, mode=pool[3:], align_corners=True)
+            self.pool = nn.Upsample(scale_factor=2, mode='nearest')
         elif pool == 'down_max':
             self.pool = nn.MaxPool2d(2, 2)
         elif pool == 'down_stride':
@@ -187,8 +150,7 @@ class Conv_Block(nn.Module):
         if self.pool:
             return x, self.pool(x)
         else:
-            return x, None  # Always return a tuple
-
+            return x, x  # Ensure two outputs are always returned
 
 
 # Utility function remains unchanged
@@ -198,5 +160,4 @@ def concat_curr(prev, curr):
 
     curr = F.pad(curr, [diffX // 2, diffX - diffX // 2,
                         diffY // 2, diffY - diffY // 2])
-    x = torch.cat([prev, curr], dim=1)
-    return x
+    return torch.cat([prev, curr], dim=1)
