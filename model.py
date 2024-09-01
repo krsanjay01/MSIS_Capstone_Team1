@@ -1,4 +1,4 @@
-from basic_layers_trans import *
+from basic_layer_trans import *
 from torch import nn
 
 
@@ -71,6 +71,26 @@ class Unet(nn.Module):
             self.add_module(f'dec_{blk_idx + 1}', self.dec[blk_idx])
 
         self.add_module(f'final', self.layers[1])
+
+    """def forward(self, img):
+        h = img
+        h_skip = []
+
+        for conv in self.enc:
+            hs, h = conv(h)
+            h_skip.append(hs)
+
+        _, h = self.mid(h)
+
+        for l_idx in range(len(self.dec)):
+            if self.concat[-(l_idx + 1)] == 2:
+                _, h = self.dec[l_idx](concat_curr(h_skip[-(l_idx + 1)], h))
+            else:
+                _, h = self.dec[l_idx](h)
+
+        h = self.final(h)
+
+        return h"""
 
     def forward(self, img):
         h = img

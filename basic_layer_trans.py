@@ -153,26 +153,26 @@ class DeConv_Layer(nn.Module):
 
 # Updated Conv_Block with optional Self-Attention
 class Conv_Block(nn.Module):
-    def __init__(self, in_c, out_c, activ=None, pool=None, norm='bn', attention=False, heads=8, attn_dropout=0.0):
+    def __init__(self, in_c, out_c, activ=None, pool=None, norm='bn', use_transformer=False, embed_size=256, num_heads=8, num_layers=6):
         super(Conv_Block, self).__init__()
-        self.attention = attention
+        self.c1 = Conv_Layer(in_c, out_c, 3, 1, activ=activ, norm=norm, padding=1)
+        self.c2 = Conv_Layer(out_c, out_c, 3, 1, activ=activ, norm=norm, padding=1)
 
-        self.c1 = Conv_Layer(in_c, out_c, kernel=3, stride=1, padding=1, activ=activ, norm=norm)
-        self.c2 = Conv_Layer(out_c, out_c, kernel=3, stride=1, padding=1, activ=activ, norm=norm)
-
-        if self.attention:
-            self.attn = SelfAttention(out_c, heads=heads, dropout=attn_dropout)
+        # Transformer Block (optional)
+        self.use_transformer = use_transformer
+        if use_transformer:
+            self.transformer = SelfAttention(embed_size=embed_size, num_heads=num_heads, num_layers=num_layers)
 
         if pool == 'up_stride':
-            self.pool = DeConv_Layer(out_c, out_c, kernel=2, stride=2, norm=norm, activ=activ)
+            self.pool = DeConv_Layer(out_c, out_c, 2, 2, norm=norm)
         elif pool == 'up_bilinear':
-            self.pool = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+            self.pool = nn.Upsample(scale_factor=2, mode=pool[3:], align_corners=True)
         elif pool == 'up_nearest':
-            self.pool = nn.Upsample(scale_factor=2, mode='nearest')
+            self.pool = nn.Upsample(scale_factor=2, mode=pool[3:], align_corners=True)
         elif pool == 'down_max':
             self.pool = nn.MaxPool2d(2, 2)
         elif pool == 'down_stride':
-            self.c2 = Conv_Layer(out_c, out_c, kernel=3, stride=2, padding=1, activ=activ, norm=norm)
+            self.c2 = Conv_Layer(out_c, out_c, 3, 2, activ=activ, norm=norm, padding=1)
             self.pool = None
         else:
             self.pool = None
@@ -181,14 +181,14 @@ class Conv_Block(nn.Module):
         x = self.c1(x)
         x = self.c2(x)
 
-        if self.attention:
-            x = self.attn(x)
+        if self.use_transformer:
+            x = self.transformer(x)
 
         if self.pool:
-            pooled = self.pool(x)
-            return x, pooled
+            return x, self.pool(x)
         else:
-            return x
+            return x, None  # Always return a tuple
+
 
 
 # Utility function remains unchanged
