@@ -42,7 +42,7 @@ def train_model(args: argparse.Namespace) -> None:
     data_root = Path(args.image_dir)
     check_dir = Path(args.checkpoint_dir)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("mps")
 
     hyper_pars = {'Epochs': args.e, 'Factor': args.f, 'Noise Type': 'uniform', "Train Size": args.tr,
                   'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 64,

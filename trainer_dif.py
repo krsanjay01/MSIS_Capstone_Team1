@@ -93,7 +93,7 @@ class TrainerMultiple(nn.Module):
         corr_b = corrs[n:]
         lab_b = labs[n:]
 
-        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float64)  # .view(-1, 1)
+        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float32)  # .view(-1, 1)
         corr_delta = torch.sqrt(((corr_a - corr_b) ** 2))
         loss = sim_label * (self.m - corr_delta) + (1. - sim_label) * corr_delta
 
@@ -356,6 +356,8 @@ class TrainerMultiple(nn.Module):
     def load_stats(self, path):
         if self.device.type == 'cpu':
             data_dict = torch.load(path, map_location=torch.device('cpu'))
+        if self.device.type == 'mps':
+            data_dict = torch.load(path, map_location=torch.device('mps'))
         else:
             data_dict = torch.load(path)
 
