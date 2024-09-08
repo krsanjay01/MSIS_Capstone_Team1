@@ -43,6 +43,7 @@ def train_model(args: argparse.Namespace) -> None:
     check_dir = Path(args.checkpoint_dir)
 
     device = torch.device("mps")
+    print(f"MPS:  {torch.backends.mps.is_available()}")
 
     hyper_pars = {'Epochs': args.e, 'Factor': args.f, 'Noise Type': 'uniform', "Train Size": args.tr,
                   'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 64,
