@@ -40,6 +40,8 @@ class TrainerDnCNN(nn.Module):
 def load_model(trainer, path, device):
     if device.type == 'cpu':
         data_dict = torch.load(path, map_location=torch.device('cpu'))
+    elif device.type == 'mps':
+        data_dict = torch.load(path, map_location=torch.device('mps'))
     else:
         data_dict = torch.load(path)
 

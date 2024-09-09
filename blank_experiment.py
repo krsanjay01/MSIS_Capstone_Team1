@@ -30,7 +30,13 @@ def preform_blank(args: argparse.Namespace) -> None:
 
     check_existence(output_dir, True)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_name = "cpu"
+    if torch.cuda.is_available():
+        device_name = "cuda"
+    elif torch.backends.mps.is_available():
+        device_name = "mps"
+
+    device = torch.device(device_name)
 
     hyper_pars = {'Epochs': epochs, 'Factor': 100, 'Noise Type': 'uniform',
                   'Noise STD': 0.03, 'Inp. Channel': 16,
