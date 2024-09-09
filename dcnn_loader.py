@@ -8,12 +8,13 @@ dncnn_root = Path("./dncnn")
 
 def load_denoiser(device: str, trainable:bool=False)-> torch.nn.Module:
 
-    denoiser_prnu_np = np.load(str(dncnn_root / r"clean_real.npy"), allow_pickle=True)
+    denoiser_prnu_np = np.load(str(dncnn_root / r"clean_real.npy"), allow_pickle=True).astype(np.float32)
 
     trainer = load_model(TrainerDnCNN, dncnn_root / f"chk_2000.pt", device)
     model = trainer.denoiser.to(device)
 
     denoiser_prnu = torch.tensor(denoiser_prnu_np.transpose((2, 0, 1))).to(device).unsqueeze(0)
+
 
     model.prnu = denoiser_prnu
 
