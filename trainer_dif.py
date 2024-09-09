@@ -93,7 +93,8 @@ class TrainerMultiple(nn.Module):
         corr_b = corrs[n:]
         lab_b = labs[n:]
 
-        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float64)  # .view(-1, 1)
+
+        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float32 if self.device.type == "mps" else torch.float64)  # .view(-1, 1)
         corr_delta = torch.sqrt(((corr_a - corr_b) ** 2))
         loss = sim_label * (self.m - corr_delta) + (1. - sim_label) * corr_delta
 

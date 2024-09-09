@@ -88,7 +88,7 @@ model directory will be used to store the extracted fingerprints.
 Example for Dall&#x2022;E-2 model:
 
 ```
-python train_dif.py data_root/dalle_2 checkpoint_directory/dalle_2
+python train_dif.py data/dalle_2 checkpoint/dalle_2
 ```
 
 #### Testing the Model
