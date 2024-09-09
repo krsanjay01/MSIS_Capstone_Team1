@@ -50,15 +50,15 @@ class Unet(nn.Module):
     def organize_arch(self):
         for idx in range(len(self.arch_n) - 1):
             self.enc.append(
-                Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max',use_transformer=False))
+                Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
 
-        self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride',use_transformer=False)]
+        self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
 
         for idx in range(len(self.arch_n) - 2):
             self.dec.append(
                 Conv_Block(self.concat[- (idx + 1)] * self.arch_n[- (idx + 1)], self.arch_n[- (idx + 2)],
-                           activ=self.activ, pool='up_stride',use_transformer=False))
-        self.dec.append(Conv_Block(self.concat[0] * self.arch, self.arch, activ=self.activ,use_transformer=False))
+                           activ=self.activ, pool='up_stride'))
+        self.dec.append(Conv_Block(self.concat[0] * self.arch, self.arch, activ=self.activ))
         self.layers.append(Conv_Layer(self.arch, self.out_ch, 1, 1, norm=None, activ='tanh'))
 
     def prep_params(self):
