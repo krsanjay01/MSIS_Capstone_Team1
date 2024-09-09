@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Train",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "train_dif.py",
+            "console": "integratedTerminal",
+            "args": [
+                "data/dalle_2",
+                "checkpoint/dalle_2"
+            ]
+        },
+        {
+            "name": "Eval",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "eval_dif.py",
+            "console": "integratedTerminal",
+            "args": [
+                "checkpoint/dalle_2",
+                "data/dalle_2"
+            ]
+        }
+    ]
+}
