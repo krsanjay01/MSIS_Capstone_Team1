@@ -120,6 +120,7 @@ class TrainerMultiple(nn.Module):
         dmy = self.prep_noise().to(self.device)
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1)
 
+        print(dmy.shape)
         corr = self.corr_fun(out, residuals)
 
         loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
