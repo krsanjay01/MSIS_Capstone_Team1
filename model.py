@@ -1,11 +1,17 @@
 from basic_layers import *
 from torch import nn
+from trans_unet.vit_seg_modeling import Transformer
+from trans_unet.vit_seg_configs import get_b16_config
 
 
 class Unet(nn.Module):
-    def __init__(self, device, inp_ch=1, out_ch=1,
+    def __init__(self, device, config=None, inp_ch=1, out_ch=1,
                  arch=16, depth=3, activ='leak', concat=None):
         super(Unet, self).__init__()
+
+        # Load the configuration, if none is provided, we will default to ViT-B_16
+        if config is None:
+            config = get_b16_config()
 
         self.activ = activ
         self.device = device
@@ -51,6 +57,18 @@ class Unet(nn.Module):
         for idx in range(len(self.arch_n) - 1):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
+
+        # Flatten the feature map to sequence of vectors
+        last_feature_map = self.arch_n[-1]
+        seq_length = last_feature_map[-1] * last_feature_map[-2]  # Assuming output shape is (B, C, H, W)
+        feature_dim = last_feature_map[1]  # Assuming number of channels
+
+        # Add the transformer component here
+        self.enc.append(lambda x: x.flatten(2).transpose(1, 2))  # Flatten and transpose to (B, N, D)
+        self.enc.append(Transformer(d_model=feature_dim, num_patches=seq_length))  # Or relevant params
+        self.enc.append(
+            lambda x: x.transpose(1, 2).view(-1, feature_dim, last_feature_map[-2],
+                                             last_feature_map[-1]))  # Restore shape
 
         self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
 
