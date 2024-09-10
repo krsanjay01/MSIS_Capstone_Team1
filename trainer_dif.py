@@ -9,6 +9,8 @@ from dcnn_loader import load_denoiser
 import model_trans
 from utils import calc_even_size, produce_spectrum
 
+import torch.nn.functional as F
+
 relu = nn.ReLU()
 
 
@@ -57,7 +59,7 @@ class TrainerMultiple(nn.Module):
         self.denoiser = load_denoiser(self.device)
         self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                                activ='leak', depth=self.depth, concat=self.concat).to(self.device)
-        self.optimizer = optim.AdamW(self.unet.parameters(), lr=self.init_lr)
+        self.optimizer = optim.RMSprop(self.unet.parameters(), lr=self.init_lr)
 
         self.loss_mse = nn.MSELoss()
 
@@ -77,11 +79,9 @@ class TrainerMultiple(nn.Module):
             return self.noise + torch.randn_like(self.noise.detach()) * var
 
     def corr_fun(self, out, target):
-        # Pearson Correlation Coefficient (NNC(0,0))
-        out = self.norm_val(out)
-        target = self.norm_val(target)
-
-        return out * target
+        # Resize `out` to match the size of `target`
+        out_resized = F.interpolate(out, size=target.shape[2:], mode='bilinear', align_corners=False)
+        return out_resized * target
 
     def loss_contrast(self, corrs, labs):
         # Label: 0 - Real, 1 - Fake

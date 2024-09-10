@@ -122,7 +122,7 @@ class Mlp(nn.Module):
 class Embeddings(nn.Module):
     """Construct the embeddings from patch, position embeddings.
     """
-    def __init__(self, config, img_size, in_channels=3):
+    def __init__(self, config, img_size, in_channels=16):
         super(Embeddings, self).__init__()
         self.hybrid = None
         self.config = config
@@ -146,7 +146,7 @@ class Embeddings(nn.Module):
                                        out_channels=config.hidden_size,
                                        kernel_size=patch_size,
                                        stride=patch_size)
-        self.position_embeddings = nn.Parameter(torch.zeros(1, n_patches, config.hidden_size))
+        self.position_embeddings = nn.Parameter(torch.zeros(1, 256, config.hidden_size))
 
         self.dropout = Dropout(config.transformer["dropout_rate"])
 

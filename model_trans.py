@@ -1,10 +1,11 @@
 from basic_layers import *
 from torch import nn
 from trans_unet.vit_seg_modeling import Transformer  # Importing transformer and encoder from vit_seg_modeling.py
+from trans_unet.vit_seg_configs import get_b16_config
 
 
 class UnetWithTransformer(nn.Module):
-    def __init__(self, device, config=None, inp_ch=1, out_ch=1, arch=16, depth=3, activ='leak', concat=None, vis=False):
+    def __init__(self, device, inp_ch=1, out_ch=1, arch=16, depth=3, activ='leak', concat=None, vis=False, config=None):
         super(UnetWithTransformer, self).__init__()
 
         self.activ = activ
@@ -15,6 +16,10 @@ class UnetWithTransformer(nn.Module):
         self.arch = arch
         self.concat = None
         self.vis = vis
+
+        # If config is None, use a default configuration (like ViT-B_16)
+        if config is None:
+            config = get_b16_config()  # Initialize default ViT-B_16 config
 
         self.arch_n = []
         self.dec = []  # Decoder layers
@@ -35,6 +40,9 @@ class UnetWithTransformer(nn.Module):
         self.prep_arch_list()
         self.organize_arch()
         self.prep_params()
+
+        # Add a Conv2d layer to reduce the output channels from 32 to 3
+        self.channel_projection = nn.Conv2d(32, 3, kernel_size=1)
 
     def check_concat(self, con):
         if con is None:
@@ -75,26 +83,21 @@ class UnetWithTransformer(nn.Module):
         self.add_module(f'final', self.layers[1])
 
     def forward(self, img):
+
         # Transformer encoder step
         x, attn_weights, features = self.encoder(img)
 
-        # Throttling layer
+        # Reshape transformer output
+        batch_size, num_patches, hidden_size = x.shape
+        height = width = int(num_patches ** 0.5)  # Assuming a square grid of patches
+        x = x.permute(0, 2, 1).contiguous().view(batch_size, hidden_size, height, width)
+
+        # Apply throttling layer
         x = self.throttling_layer(x)
 
-        h_skip = []
-        for conv in self.enc:
-            hs, x = conv(x)
-            h_skip.append(hs)
+        # Project the output channels from 32 to 3 to match residuals
+        x = self.channel_projection(x)
 
-        _, x = self.mid(x)
-
-        for l_idx in range(len(self.dec)):
-            if self.concat[-(l_idx + 1)] == 2:
-                _, x = self.dec[l_idx](concat_curr(h_skip[-(l_idx + 1)], x))
-            else:
-                _, x = self.dec[l_idx](x)
-
-        x = self.final(x)
         return x
 
 
