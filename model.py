@@ -1,13 +1,12 @@
 from basic_layers import *
 from torch import nn
-from trans_unet.vit_seg_modeling import Transformer
-from trans_unet.vit_seg_configs import get_b16_config
 
 
-class Unet(nn.Module):
+class Unet_original(nn.Module):
     def __init__(self, device, config=None, inp_ch=1, out_ch=1,
                  arch=16, depth=3, activ='leak', concat=None):
-        super(Unet, self).__init__()
+        super(Unet_original, self).__init__()
+
 
         self.activ = activ
         self.device = device
@@ -53,7 +52,6 @@ class Unet(nn.Module):
         for idx in range(len(self.arch_n) - 1):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
-
 
         self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
 
