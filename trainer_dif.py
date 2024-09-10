@@ -6,7 +6,7 @@ import torch
 from tqdm import tqdm
 
 from dcnn_loader import load_denoiser
-import model
+import model_trans
 from utils import calc_even_size, produce_spectrum
 
 relu = nn.ReLU()
@@ -55,7 +55,7 @@ class TrainerMultiple(nn.Module):
         self.noise = None
 
         self.denoiser = load_denoiser(self.device)
-        self.unet = model.Unet(self.device, self.ch_i, self.ch_o, self.arch,
+        self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                                activ='leak', depth=self.depth, concat=self.concat).to(self.device)
         self.optimizer = optim.AdamW(self.unet.parameters(), lr=self.init_lr)
 
@@ -120,7 +120,6 @@ class TrainerMultiple(nn.Module):
         dmy = self.prep_noise().to(self.device)
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1)
 
-        print(dmy.shape)
         corr = self.corr_fun(out, residuals)
 
         loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
@@ -400,7 +399,7 @@ class TrainerSingle(nn.Module):
         self.init_train()
 
         # Model initialization
-        self.AE = model.Unet(self.device, self.ch_i, self.ch_o, self.arch,
+        self.AE = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                              activ='leak', depth=self.depth, concat=self.concat).to(self.device)
         #self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
         self.optimizer = optim.RMSprop(self.AE.parameters(), lr=self.init_lr,)
