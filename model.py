@@ -9,10 +9,6 @@ class Unet(nn.Module):
                  arch=16, depth=3, activ='leak', concat=None):
         super(Unet, self).__init__()
 
-        # Load the configuration, if none is provided, we will default to ViT-B_16
-        if config is None:
-            config = get_b16_config()
-
         self.activ = activ
         self.device = device
         self.out_ch = out_ch
