@@ -6,7 +6,7 @@ import torch
 from tqdm import tqdm
 
 from dcnn_loader import load_denoiser
-import model_trans
+import model_swin_unet
 from utils import calc_even_size, produce_spectrum
 
 relu = nn.ReLU()
@@ -55,8 +55,8 @@ class TrainerMultiple(nn.Module):
         self.noise = None
 
         self.denoiser = load_denoiser(self.device)
-        self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
-                               activ='leak', depth=self.depth, concat=self.concat).to(self.device)
+        self.unet = model_swin_unet.SwinTransformer(self.device, self.ch_i, self.ch_o, self.arch,
+                               activ='leak', concat=self.concat).to(self.device)
         self.optimizer = optim.AdamW(self.unet.parameters(), lr=self.init_lr)
 
         self.loss_mse = nn.MSELoss()
@@ -399,7 +399,7 @@ class TrainerSingle(nn.Module):
         self.init_train()
 
         # Model initialization
-        self.AE = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
+        self.AE = model_swin_unet.SwinTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                              activ='leak', depth=self.depth, concat=self.concat).to(self.device)
         #self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
         self.optimizer = optim.RMSprop(self.AE.parameters(), lr=self.init_lr,)

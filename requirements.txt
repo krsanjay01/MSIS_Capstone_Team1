@@ -12,3 +12,4 @@ ml-collections
 SimpleITK
 scipy
 h5py
+einops
