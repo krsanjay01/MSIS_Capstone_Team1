@@ -58,10 +58,23 @@ class Unet(nn.Module):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
 
-        # Flatten the feature map to sequence of vectors
-        last_feature_map = self.arch_n[-1]
-        seq_length = last_feature_map[-1] * last_feature_map[-2]  # Assuming output shape is (B, C, H, W)
-        feature_dim = last_feature_map[1]  # Assuming number of channels
+            # Debug print to inspect self.arch_n[-1]
+            print(f"self.arch_n: {self.arch_n}")
+            print(f"self.arch_n[-1]: {self.arch_n[-1]}")
+
+            # Assuming the Conv_Block outputs feature maps of shape (B, C, H, W)
+            # Modify this part to correctly handle the shape of last_feature_map
+            if isinstance(self.arch_n[-1], int):  # If it’s an integer, we are missing dimensions.
+                feature_dim = self.arch_n[-1]
+                seq_length = self.arch_n[-2] ** 2  # Assuming H == W, and we use the second last element for dimensions.
+            else:
+                # Assuming it's a shape tuple/list (C, H, W) or similar
+                last_feature_map = self.arch_n[-1]
+                seq_length = last_feature_map[-1] * last_feature_map[-2]  # Assuming last_feature_map is (C, H, W)
+                feature_dim = last_feature_map[1]  # Assuming last shape is (C, H, W) and we need C
+
+            # More debug prints to verify the calculated dimensions
+            print(f"seq_length: {seq_length}, feature_dim: {feature_dim}")
 
         # Add the transformer component here
         self.enc.append(lambda x: x.flatten(2).transpose(1, 2))  # Flatten and transpose to (B, N, D)
