@@ -2,10 +2,10 @@ from basic_layers import *
 from torch import nn
 
 
-class Unet_original(nn.Module):
+class Unet(nn.Module):
     def __init__(self, device, config=None, inp_ch=1, out_ch=1,
                  arch=16, depth=3, activ='leak', concat=None):
-        super(Unet_original, self).__init__()
+        super(Unet, self).__init__()
 
 
         self.activ = activ
