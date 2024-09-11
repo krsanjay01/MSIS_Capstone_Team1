@@ -1,5 +1,7 @@
 from basic_layers import *
 from torch import nn
+import numpy as np
+import torch
 from trans_unet.vit_seg_modeling import Transformer  # Importing transformer and encoder from vit_seg_modeling.py
 from trans_unet.vit_seg_configs import get_b16_config
 
@@ -35,6 +37,10 @@ class UnetWithTransformer(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+        # Load pre-trained weights if a path is provided
+        if config.pretrained_path:
+            self.load_pretrained_weights(config.pretrained_path)
+
         # Initialize the decoder and final layer as in the original model
         self.check_concat(concat)
         self.prep_arch_list()
@@ -43,6 +49,22 @@ class UnetWithTransformer(nn.Module):
 
         # Add a Conv2d layer to reduce the output channels from 32 to 3
         self.channel_projection = nn.Conv2d(32, 3, kernel_size=1)
+
+    def load_pretrained_weights(self, pretrained_path):
+        """
+        Load the pre-trained ViT weights from the .npz file.
+        """
+        # Load the weights from the .npz file
+        pretrained_weights = np.load(pretrained_path)
+
+        # Loop over all layers and assign weights from the .npz file
+        for name, param in self.encoder.named_parameters():
+            layer_name = name.replace('.', '/')
+            if layer_name in pretrained_weights:
+                print(f"Loading weight for layer: {layer_name}")
+                param.data = torch.from_numpy(pretrained_weights[layer_name])
+
+        print("Pre-trained weights loaded successfully.")
 
     def check_concat(self, con):
         if con is None:
@@ -99,6 +121,7 @@ class UnetWithTransformer(nn.Module):
         x = self.channel_projection(x)
 
         return x
+
 
 
 # ----------------Test---------------------------

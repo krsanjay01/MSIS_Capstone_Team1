@@ -34,9 +34,9 @@ def apply_blur(input_dir, output_dir, sigma_value):
     print('All images have been processed.')
 
 
-def compress(input_dir, output_dir):
+def resize(input_dir, output_dir):
     """
-    Compress images using JPEG at quality levels of 75, then resize images by down-sampling
+    Resize images by down-sampling
     to half of their original size and then up-sampling back using nearest-neighbor interpolation.
 
     :param input_dir: Path to the directory containing input images.
@@ -53,28 +53,49 @@ def compress(input_dir, output_dir):
             img_path = os.path.join(input_dir, filename)
             img = Image.open(img_path)
 
-            # Compress the image using JPEG with quality level of 75
-            compressed_path = os.path.join(output_dir, f"compressed_{filename}")
-            img.save(compressed_path, format="JPEG", quality=75)
-
-            # Open the compressed image
-            compressed_img = Image.open(compressed_path)
-
             # Resize the image to half its size
-            half_size = (compressed_img.size[0] // 2, compressed_img.size[1] // 2)
-            img_resized = compressed_img.resize(half_size, Image.NEAREST)
+            half_size = (img.size[0] // 2, img.size[1] // 2)
+            img_resized = img.resize(half_size, Image.NEAREST)
 
             # Resize the image back to its original size
-            img_resized_back = img_resized.resize(compressed_img.size, Image.NEAREST)
+            img_resized_back = img_resized.resize(img.size, Image.NEAREST)
 
             # Save the resized image to the output directory
             final_output_path = os.path.join(output_dir, filename)
             img_resized_back.save(final_output_path, format="JPEG", quality=75)
 
-            print(f'Compressed and resized {filename}')
+    print('All images have been resized.')
 
-    print('All images have been compressed and resized.')
+def compress_jpeg(input_dir, output_dir, compression_level):
+    """
+    Compress images using JPEG at quality levels of 75
 
+    :param input_dir: Path to the directory containing input images.
+    :param output_dir: Path to the directory where processed images will be saved.
+    """
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Loop through all files in the input directory
+    for filename in os.listdir(input_dir):
+        if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
+            # Open the image file
+            img_path = os.path.join(input_dir, filename)
+            img = Image.open(img_path)
+
+            # If the image has an alpha channel (RGBA), convert it to RGB
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
+
+            # Get the filename without extension and add .jpg extension
+            base_name = os.path.splitext(filename)[0]
+            compressed_path = os.path.join(output_dir, f"{base_name}.jpg")
+
+            # Compress the image using JPEG with quality level of 75
+            img.save(compressed_path, format="JPEG", quality=compression_level)
+
+    print('All images have been compressed to JPEG 75.')
 
 def main():
     if len(sys.argv) != 5:
@@ -86,11 +107,13 @@ def main():
     input_directory = sys.argv[2]
     output_directory = sys.argv[3]
 
+
     if function_name == "apply_blur":
         sigma = float(sys.argv[4])
         apply_blur(input_directory, output_directory, sigma)
     elif function_name == "compress":
-        compress(input_directory, output_directory)
+        compression_level = int(sys.argv[4])
+        compress_jpeg(input_directory, output_directory, compression_level)
     else:
         print(f"Function '{function_name}' not recognized.")
 
