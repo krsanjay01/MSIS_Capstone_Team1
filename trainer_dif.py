@@ -7,15 +7,16 @@ from tqdm import tqdm
 
 from dcnn_loader import load_denoiser
 import model_trans
-from utils import calc_even_size, produce_spectrum
 
+from utils import calc_even_size, produce_spectrum
+import model_swin
 import torch.nn.functional as F
 
 relu = nn.ReLU()
 
 
 class TrainerMultiple(nn.Module):
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams, args):
         super(TrainerMultiple, self).__init__()
 
         # Hyperparameters
@@ -57,9 +58,10 @@ class TrainerMultiple(nn.Module):
         self.noise = None
 
         self.denoiser = load_denoiser(self.device)
-        self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
-                               activ='leak', depth=self.depth, concat=self.concat).to(self.device)
-        self.optimizer = optim.RMSprop(self.unet.parameters(), lr=self.init_lr)
+        # self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
+        #                        activ='leak', depth=self.depth, concat=self.concat).to(self.device)
+        self.unet = model_swin.SwinUnet(self.device, args).to(self.device)
+        # self.optimizer = optim.RMSprop(self.unet.parameters(), lr=self.init_lr)
 
         self.loss_mse = nn.MSELoss()
 
@@ -106,7 +108,7 @@ class TrainerMultiple(nn.Module):
         labels = labels.to(self.device)
 
         self.unet.train()
-        self.optimizer.zero_grad()
+        # self.optimizer.zero_grad()
 
         residuals = self.denoiser.denoise(images).detach()
         alpha = (1 - self.alpha) * torch.rand((len(images), 1, 1, 1)).to(self.device) + self.alpha

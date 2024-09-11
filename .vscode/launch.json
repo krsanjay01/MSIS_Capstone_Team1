@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "args": [
                 "data/dalle_2",
-                "checkpoint/dalle_2"
+                "checkpoint/dalle_2",
             ]
         },
         {

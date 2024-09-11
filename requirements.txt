@@ -12,3 +12,5 @@ ml-collections
 SimpleITK
 scipy
 h5py
+timm
+yacs
