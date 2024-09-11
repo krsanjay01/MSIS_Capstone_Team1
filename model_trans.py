@@ -37,14 +37,14 @@ class UnetWithTransformer(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        # Load pre-trained weights if a path is provided
+        '''# Load pre-trained weights if a path is provided
         if config.pretrained_path:
-            self.load_pretrained_weights(config.pretrained_path)
+            self.load_pretrained_weights(config.pretrained_path)'''
 
         # Initialize the decoder and final layer as in the original model
         self.check_concat(concat)
         self.prep_arch_list()
-        self.organize_arch()
+        self.organize_arch(config)
         self.prep_params()
 
         # Add a Conv2d layer to reduce the output channels from 32 to 3
@@ -87,7 +87,7 @@ class UnetWithTransformer(nn.Module):
 
         self.arch_n[0] = self.inp_ch
 
-    def organize_arch(self):
+    def organize_arch(self, config):
         self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
 
         for idx in range(len(self.arch_n) - 2):

@@ -59,7 +59,19 @@ class TrainerMultiple(nn.Module):
         self.denoiser = load_denoiser(self.device)
         self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                                activ='leak', depth=self.depth, concat=self.concat).to(self.device)
-        self.optimizer = optim.RMSprop(self.unet.parameters(), lr=self.init_lr)
+        #self.optimizer = optim.AdamW(self.unet.parameters(), lr=1e-5, weight_decay=1e-5)
+
+        # Collect parameters from each decoder layer (since it's a list of modules)
+        decoder_params = []
+        for layer in self.unet.dec:
+            decoder_params += list(layer.parameters())
+
+        # Optimizer with different learning rates for different parts of the model
+        self.optimizer = optim.AdamW([
+            {'params': self.unet.encoder.parameters(), 'lr': 1e-5},
+            # Lower learning rate for Transformer
+            {'params': decoder_params, 'lr': 1e-4},  # Higher learning rate for UNet decoder
+        ], weight_decay=1e-5)
 
         self.loss_mse = nn.MSELoss()
 
@@ -402,7 +414,19 @@ class TrainerSingle(nn.Module):
         self.AE = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                              activ='leak', depth=self.depth, concat=self.concat).to(self.device)
         #self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
-        self.optimizer = optim.RMSprop(self.AE.parameters(), lr=self.init_lr,)
+        #self.optimizer = optim.RMSprop(self.AE.parameters(), lr=self.init_lr,)
+
+        # Collect parameters from each decoder layer (since it's a list of modules)
+        decoder_params = []
+        for layer in self.unet.decoder:
+            decoder_params += list(layer.parameters())
+
+        # Optimizer with different learning rates for different parts of the model
+        self.optimizer = optim.AdamW([
+            {'params': self.unet.encoder.parameters, 'lr': 1e-5},
+            # Lower learning rate for Transformer
+            {'params': decoder_params, 'lr': 1e-4},  # Higher learning rate for UNet decoder
+        ], weight_decay=1e-5)
 
         self.loss_mse = nn.MSELoss()
 
@@ -459,7 +483,6 @@ class TrainerSingle(nn.Module):
             return out.cpu().numpy().transpose((1, 2, 0))
         else:
             return out
-
 
 def distance(arr, mu_a, mu_b):
     dist_arr2a = np.sqrt(((arr - mu_a) ** 2)).reshape((-1, 1))
