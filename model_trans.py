@@ -41,7 +41,7 @@ class UnetWithTransformer(nn.Module):
         if config.pretrained_path:
             self.load_pretrained_weights(config.pretrained_path)'''
 
-        # Initialize the decoder and final layer as in the original model
+        # Initialize the decoder and final layer as in the original model_vit
         self.check_concat(concat)
         self.prep_arch_list()
         self.organize_arch(config)

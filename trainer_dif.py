@@ -66,7 +66,7 @@ class TrainerMultiple(nn.Module):
         for layer in self.unet.dec:
             decoder_params += list(layer.parameters())
 
-        # Optimizer with different learning rates for different parts of the model
+        # Optimizer with different learning rates for different parts of the model_vit
         self.optimizer = optim.AdamW([
             {'params': self.unet.encoder.parameters(), 'lr': 1e-5},
             # Lower learning rate for Transformer
@@ -421,7 +421,7 @@ class TrainerSingle(nn.Module):
         for layer in self.unet.decoder:
             decoder_params += list(layer.parameters())
 
-        # Optimizer with different learning rates for different parts of the model
+        # Optimizer with different learning rates for different parts of the model_vit
         self.optimizer = optim.AdamW([
             {'params': self.unet.encoder.parameters, 'lr': 1e-5},
             # Lower learning rate for Transformer
