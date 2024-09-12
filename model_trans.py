@@ -37,7 +37,7 @@ class UnetWithTransformer(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        '''# Load pre-trained weights if a path is provided 
+        '''# Load pre-trained weights if a path is provided
         if config.pretrained_path:
             self.load_pretrained_weights(config.pretrained_path)'''
 
