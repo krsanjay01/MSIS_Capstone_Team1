@@ -2,7 +2,7 @@ import argparse
 import torch
 
 import data_dif as data
-from trainer_dif import TrainerMultiple
+from trainer_dif_trans import TrainerMultiple
 from utils import *
 import pickle
 from pathlib import Path
@@ -41,7 +41,13 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
     with open(check_dir / "train_hypers.pt", 'rb') as pickle_file:
         hyper_pars = pickle.load(pickle_file)
 
-    hyper_pars['Device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_name = "cpu"
+    if torch.cuda.is_available():
+        device_name = "cuda"
+    elif torch.backends.mps.is_available():
+        device_name = "mps"
+
+    hyper_pars['Device'] = torch.device(device_name)
     hyper_pars['Batch Size'] = args.batch
 
     print(f'Working on {images_dir.stem}')
@@ -55,7 +61,7 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
     test_set = data.PRNUData(real_path_list, fake_path_list, hyper_pars, demand_equal=False,
                              train_mode=False)
 
-    trainer = TrainerMultiple(hyper_pars)
+    trainer = TrainerMultiple(hyper_pars, False)
     trainer.load_stats(check_dir / f"chk_{model_ep}.pt")
 
     trainer.test_model(test_set.get_loader())

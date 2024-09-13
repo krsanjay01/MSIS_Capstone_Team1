@@ -6,14 +6,16 @@ import torch
 from tqdm import tqdm
 
 from dcnn_loader import load_denoiser
-import model
+import model_trans
 from utils import calc_even_size, produce_spectrum
+
+import torch.nn.functional as F
 
 relu = nn.ReLU()
 
 
 class TrainerMultiple(nn.Module):
-    def __init__(self, hyperparams):
+    def __init__(self, hyperparams, train=True):
         super(TrainerMultiple, self).__init__()
 
         # Hyperparameters
@@ -55,9 +57,21 @@ class TrainerMultiple(nn.Module):
         self.noise = None
 
         self.denoiser = load_denoiser(self.device)
-        self.unet = model.Unet(self.device, self.ch_i, self.ch_o, self.arch,
-                               activ='leak', depth=self.depth, concat=self.concat).to(self.device)
-        self.optimizer = optim.AdamW(self.unet.parameters(), lr=self.init_lr)
+        self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
+                               activ='leak', depth=self.depth, concat=self.concat, train=train).to(self.device)
+        #self.optimizer = optim.AdamW(self.unet.parameters(), lr=1e-5, weight_decay=1e-5)
+
+        # Collect parameters from each decoder layer (since it's a list of modules)
+        decoder_params = []
+        for layer in self.unet.dec:
+            decoder_params += list(layer.parameters())
+
+        # Optimizer with different learning rates for different parts of the model
+        self.optimizer = optim.RMSprop([
+            {'params': self.unet.encoder.parameters(), 'lr': 1e-4},
+            # Lower learning rate for Transformer
+            {'params': decoder_params, 'lr': 1e-4},  # Higher learning rate for UNet decoder
+        ], weight_decay=1e-5)
 
         self.loss_mse = nn.MSELoss()
 
@@ -77,11 +91,9 @@ class TrainerMultiple(nn.Module):
             return self.noise + torch.randn_like(self.noise.detach()) * var
 
     def corr_fun(self, out, target):
-        # Pearson Correlation Coefficient (NNC(0,0))
-        out = self.norm_val(out)
-        target = self.norm_val(target)
-
-        return out * target
+        # Resize `out` to match the size of `target`
+        out_resized = F.interpolate(out, size=target.shape[2:], mode='bilinear', align_corners=False)
+        return out_resized * target
 
     def loss_contrast(self, corrs, labs):
         # Label: 0 - Real, 1 - Fake
@@ -93,7 +105,8 @@ class TrainerMultiple(nn.Module):
         corr_b = corrs[n:]
         lab_b = labs[n:]
 
-        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float64)  # .view(-1, 1)
+
+        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float32 if self.device.type == "mps" else torch.float64)  # .view(-1, 1)
         corr_delta = torch.sqrt(((corr_a - corr_b) ** 2))
         loss = sim_label * (self.m - corr_delta) + (1. - sim_label) * corr_delta
 
@@ -356,6 +369,8 @@ class TrainerMultiple(nn.Module):
     def load_stats(self, path):
         if self.device.type == 'cpu':
             data_dict = torch.load(path, map_location=torch.device('cpu'))
+        elif self.device.type == 'mps':
+            data_dict = torch.load(path, map_location=torch.device('mps'))
         else:
             data_dict = torch.load(path)
 
@@ -396,9 +411,22 @@ class TrainerSingle(nn.Module):
         self.init_train()
 
         # Model initialization
-        self.AE = model.Unet(self.device, self.ch_i, self.ch_o, self.arch,
+        self.AE = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
                              activ='leak', depth=self.depth, concat=self.concat).to(self.device)
-        self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
+        #self.optimizer = optim.AdamW(self.AE.parameters(), lr=self.init_lr)
+        #self.optimizer = optim.RMSprop(self.AE.parameters(), lr=self.init_lr,)
+
+        # Collect parameters from each decoder layer (since it's a list of modules)
+        decoder_params = []
+        for layer in self.unet.decoder:
+            decoder_params += list(layer.parameters())
+
+        # Optimizer with different learning rates for different parts of the model
+        self.optimizer = optim.AdamW([
+            {'params': self.unet.encoder.parameters, 'lr': 1e-5},
+            # Lower learning rate for Transformer
+            {'params': decoder_params, 'lr': 1e-4},  # Higher learning rate for UNet decoder
+        ], weight_decay=1e-5)
 
         self.loss_mse = nn.MSELoss()
 
@@ -455,7 +483,6 @@ class TrainerSingle(nn.Module):
             return out.cpu().numpy().transpose((1, 2, 0))
         else:
             return out
-
 
 def distance(arr, mu_a, mu_b):
     dist_arr2a = np.sqrt(((arr - mu_a) ** 2)).reshape((-1, 1))

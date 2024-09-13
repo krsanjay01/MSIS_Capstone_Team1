@@ -2,7 +2,7 @@ from tqdm import tqdm
 import torch
 import argparse
 import data_dif as data
-from trainer_dif import TrainerMultiple
+from trainer_dif_trans import TrainerMultiple
 from utils import *
 from pathlib import Path
 import pickle
@@ -36,18 +36,24 @@ def parse_arguments() -> argparse.Namespace:
     parsed_args = parser.parse_args()
     return parsed_args
 
-
 def train_model(args: argparse.Namespace) -> None:
 
     data_root = Path(args.image_dir)
     check_dir = Path(args.checkpoint_dir)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    device_name = "cpu"
+    if torch.cuda.is_available():
+        device_name = "cuda"
+    elif torch.backends.mps.is_available():
+        device_name = "mps"
+
+    device = torch.device(device_name)
 
     hyper_pars = {'Epochs': args.e, 'Factor': args.f, 'Noise Type': 'uniform', "Train Size": args.tr,
-                  'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 64,
+                  'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 16,
                   'LR': 5e-4, 'Device': device, 'Crop Size': (args.cs, args.cs), 'Margin': 0.01,
-                  'Out. Channel': 3, 'Arch.': 32, 'Depth': 4, 'Alpha': args.a, 'Boost': args.b,
+                  'Out. Channel': 3, 'Arch.': 32, 'Depth': 8, 'Alpha': args.a, 'Boost': args.b,
                   'Concat': [1, 1, 1, 1]}
 
     check_existence(check_dir, True)
@@ -76,6 +82,7 @@ def train_model(args: argparse.Namespace) -> None:
     epochs = list(range(1, hyper_pars['Epochs'] + 1))
     pbar = tqdm(total=len(epochs), desc='')
 
+
     for ep in epochs:
         pbar.update()
 
@@ -89,8 +96,8 @@ def train_model(args: argparse.Namespace) -> None:
         pbar.postfix = f'Loss C {np.mean(trainer.train_loss[-10:]):.3f} ' + \
                        f'| Fake C {np.mean(trainer.train_corr_f[-10:]):.3f} | Real C {np.mean(trainer.train_corr_r[-10:]):.3f}'
 
-    trainer.save_stats(check_dir / ('chk_' + str(hyper_pars['Epochs']) + '.pt'))
-    torch.cuda.empty_cache()
+        trainer.save_stats(check_dir / ('chk_' + str(hyper_pars['Epochs']) + '.pt'))
+        torch.cuda.empty_cache()
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 from tqdm import tqdm
 import data_dif as data
-from trainer_dif import TrainerSingle
+from trainer_dif_trans import TrainerSingle
 from utils import *
 
 

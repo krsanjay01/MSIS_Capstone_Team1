@@ -4,6 +4,19 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from PIL import Image
 
+# Define augmentation transforms
+train_transforms = transforms.Compose([
+    transforms.RandomHorizontalFlip(),       # Randomly flip the images horizontally
+    transforms.RandomRotation(10),           # Randomly rotate the images by 10 degrees
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Adjust brightness, contrast, etc.
+    transforms.ToTensor(),                   # Convert the image to a PyTorch tensor
+])
+
+# Define transforms for validation/testing (no augmentation)
+test_transforms = transforms.Compose([
+    transforms.ToTensor(),  # Convert the image to a PyTorch tensor without any augmentation
+])
+
 prnu_tens = transforms.ToTensor()
 
 def shuffle_split(data_list, n_train):
@@ -116,6 +129,9 @@ class PRNUData(Dataset):
         self.init_loader()
         self.train_mode = train_mode
 
+        # Select the appropriate transforms based on mode (train or test)
+        self.transforms = train_transforms if self.train_mode else test_transforms
+
     def prep_inputs(self, demand_equal):
 
         n_real = len(self.real_paths)
@@ -153,6 +169,9 @@ class PRNUData(Dataset):
         label = self.label_list[idx]
         image = np.array(image)
 
-        image = torch.tensor(image.transpose((2, 0, 1))).type(torch.float32).div(255)
+        # Apply data augmentation if in training mode
+        image = self.transforms(image)
+
+        #image = torch.tensor(image.transpose((2, 0, 1))).type(torch.float32).div(255)
 
         return image, label
