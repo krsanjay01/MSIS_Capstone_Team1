@@ -2,4 +2,4 @@
 .venv
 __pycache__
 checkpoint
-/model/vit_checkpoint/imagenet21k/imagenet21k_ViT-B_16.npz
+#/model/vit_checkpoint/imagenet21k/imagenet21k_ViT-B_16.npz
