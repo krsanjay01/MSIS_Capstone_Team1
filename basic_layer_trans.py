@@ -122,7 +122,7 @@ class Conv_Block(nn.Module):
         self.c1 = Conv_Layer(in_c, out_c, 3, 1, activ=activ, norm=norm, padding=1)
         self.c2 = Conv_Layer(out_c, out_c, 3, 1, activ=activ, norm=norm, padding=1)
 
-        # Transformer Block (optional)
+        # Transformer Block (optional) xyz
         self.use_transformer = use_transformer
         if use_transformer:
             self.transformer = SelfAttention(in_dim=out_c, heads=num_heads, dropout=0.1)
