@@ -41,19 +41,18 @@ def train_model(args: argparse.Namespace) -> None:
     data_root = Path(args.image_dir)
     check_dir = Path(args.checkpoint_dir)
 
-
-    device_name = "cpu"
-    if torch.cuda.is_available():
-        device_name = "cuda"
-    elif torch.backends.mps.is_available():
-        device_name = "mps"
-
-    device = torch.device(device_name)
+    # Check if MPS is available, otherwise use CUDA or CPU
+    if torch.backends.mps.is_available():
+        device = torch.device('mps')
+    elif torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
 
     hyper_pars = {'Epochs': args.e, 'Factor': args.f, 'Noise Type': 'uniform', "Train Size": args.tr,
-                  'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 16,
+                  'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 64,
                   'LR': 5e-4, 'Device': device, 'Crop Size': (args.cs, args.cs), 'Margin': 0.01,
-                  'Out. Channel': 3, 'Arch.': 32, 'Depth': 8, 'Alpha': args.a, 'Boost': args.b,
+                  'Out. Channel': 3, 'Arch.': 32, 'Depth': 4, 'Alpha': args.a, 'Boost': args.b,
                   'Concat': [1, 1, 1, 1]}
 
     check_existence(check_dir, True)

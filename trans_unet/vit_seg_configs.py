@@ -3,12 +3,12 @@ import ml_collections
 def get_b16_config():
     """Returns the ViT-B/16 configuration."""
     config = ml_collections.ConfigDict()
-    config.patches = ml_collections.ConfigDict({'size': (16, 16)})
-    config.hidden_size = 1536
+    config.patches = ml_collections.ConfigDict({'size': (8,8)})
+    config.hidden_size = 512
     config.transformer = ml_collections.ConfigDict()
     config.transformer.mlp_dim = 3072
-    config.transformer.num_heads = 32
-    config.transformer.num_layers = 32
+    config.transformer.num_heads = 8
+    config.transformer.num_layers = 8
     config.transformer.attention_dropout_rate = 0.1
     config.transformer.dropout_rate = 0.1
 
@@ -42,13 +42,13 @@ def get_testing():
 def get_r50_b16_config():
     """Returns the Resnet50 + ViT-B/16 configuration."""
     config = get_b16_config()
-    config.patches.grid = (16, 16)
+    config.patches.grid = (8,8)
     config.resnet = ml_collections.ConfigDict()
-    config.resnet.num_layers = (3, 4, 9)
+    config.resnet.num_layers = (2,3,4)
     config.resnet.width_factor = 1
 
     config.classifier = 'seg'
-    config.pretrained_path = '../model/vit_checkpoint/imagenet21k/R50+ViT-B_16.npz'
+    config.pretrained_path = './model/vit_checkpoint/imagenet21k/imagenet21k_R50+ViT-B_16.npz'
     config.decoder_channels = (256, 128, 64, 16)
     config.skip_channels = [512, 256, 64, 16]
     config.n_classes = 2

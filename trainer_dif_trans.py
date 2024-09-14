@@ -19,7 +19,7 @@ class TrainerMultiple(nn.Module):
         super(TrainerMultiple, self).__init__()
 
         # Hyperparameters
-        self.device = hyperparams['Device']
+
         self.init_lr = hyperparams['LR']
         self.ch_i = hyperparams['Inp. Channel']
         self.ch_o = hyperparams['Out. Channel']
@@ -33,6 +33,14 @@ class TrainerMultiple(nn.Module):
             self.boost = hyperparams['Boost']
         except:
             self.boost = False
+
+        # Check if MPS is available, otherwise use CUDA or CPU
+        if torch.backends.mps.is_available():
+            self.device = torch.device('mps')
+        elif torch.cuda.is_available():
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
 
         self.train_loss = []
         self.train_corr_r = None
@@ -106,7 +114,7 @@ class TrainerMultiple(nn.Module):
         lab_b = labs[n:]
 
 
-        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float32 if self.device.type == "mps" else torch.float64)  # .view(-1, 1)
+        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float32).to(self.device)
         corr_delta = torch.sqrt(((corr_a - corr_b) ** 2))
         loss = sim_label * (self.m - corr_delta) + (1. - sim_label) * corr_delta
 
@@ -114,52 +122,60 @@ class TrainerMultiple(nn.Module):
 
     def train_step(self, images, labels):
 
-        images = images.to(self.device)
-        labels = labels.to(self.device)
+        # Ensure the images and labels are moved to the correct device and have the right type
+        images = images.to(self.device, dtype=torch.float32)
+        labels = labels.to(self.device, dtype=torch.float32)
+
+        print(f"Images device: {images.device}, dtype: {images.dtype}")
+        print(f"Labels device: {labels.device}, dtype: {labels.dtype}")
+
+        # Check model weights
+        print(f"Model encoder device: {next(self.unet.encoder.parameters()).device}")
+        print(f"Model encoder dtype: {next(self.unet.encoder.parameters()).dtype}")
 
         self.unet.train()
         self.optimizer.zero_grad()
 
-        residuals = self.denoiser.denoise(images).detach()
+        # Ensure residuals are on the correct device
+        residuals = self.denoiser.denoise(images).detach().to(self.device, dtype=torch.float32)
+
         alpha = (1 - self.alpha) * torch.rand((len(images), 1, 1, 1)).to(self.device) + self.alpha
         residuals = alpha * residuals
+        print(f"Residuals device: {residuals.device}, dtype: {residuals.dtype}")
 
-        f_mean = residuals[labels].mean(0, keepdims=True)
-        r_mean = residuals[~labels].mean(0, keepdims=True)
+        f_mean = residuals[labels.bool()].mean(0, keepdims=True).to(self.device, dtype=torch.float32)
+        r_mean = residuals[~labels.bool()].mean(0, keepdims=True).to(self.device, dtype=torch.float32)
 
         residuals = torch.cat((residuals, f_mean, r_mean), dim=0)
 
-        dmy = self.prep_noise().to(self.device)
-        out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1)
+        dmy = self.prep_noise().to(self.device, dtype=torch.float32)
+        out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device, dtype=torch.float32)
 
         corr = self.corr_fun(out, residuals)
 
         loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
 
-        if self.boost:
-            corr_mean_d = torch.sqrt((corr[-2].mean() - corr[-1].mean()) ** 2)
-            loss_b = relu(self.m - corr_mean_d) / self.m
-            loss += loss_b
-            loss *= 0.5
-
         loss.backward()
         self.optimizer.step()
 
+        # Update fingerprint
         if self.fingerprint is None:
-            self.fingerprint = out[0:1].detach()
+            self.fingerprint = out[0:1].detach().to(self.device, dtype=torch.float32)
         else:
-            self.fingerprint = self.fingerprint * 0.99 + out[0:1].detach() * (1 - 0.99)
+            self.fingerprint = (
+                        self.fingerprint * 0.99 + out[0:1].detach().to(self.device, dtype=torch.float32) * (1 - 0.99))
 
         corr = self.corr_fun(self.fingerprint.repeat(len(images), 1, 1, 1), residuals[:-2]).mean((1, 2, 3))
 
         self.train_loss.append(loss.item())
 
+        # Update training correlations
         if self.train_corr_r is None:
-            self.train_corr_r = [corr[~labels].mean().item()]
-            self.train_corr_f = [corr[labels].mean().item()]
+            self.train_corr_r = [corr[~labels.bool()].mean().item()]
+            self.train_corr_f = [corr[labels.bool()].mean().item()]
         else:
-            corr_r = corr[~labels]
-            corr_f = corr[labels]
+            corr_r = corr[~labels.bool()]
+            corr_f = corr[labels.bool()]
             self.train_corr_r.append(corr_r.mean().item())
             self.train_corr_f.append(corr_f.mean().item())
 
