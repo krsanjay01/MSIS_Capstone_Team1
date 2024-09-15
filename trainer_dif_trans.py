@@ -36,7 +36,7 @@ class TrainerMultiple(nn.Module):
 
         # Check if MPS is available, otherwise use CUDA or CPU
         if torch.backends.mps.is_available():
-            self.device = torch.device('mps')
+            self.device = torch.device('cpu')
         elif torch.cuda.is_available():
             self.device = torch.device('cuda')
         else:
@@ -113,8 +113,9 @@ class TrainerMultiple(nn.Module):
         corr_b = corrs[n:]
         lab_b = labs[n:]
 
-
-        sim_label = torch.bitwise_xor(lab_a, lab_b).type(torch.float32).to(self.device)
+        # Ensure that labels are integers before applying bitwise_xor
+        sim_label = torch.bitwise_xor(lab_a.type(torch.int32), lab_b.type(torch.int32)).type(torch.float32).to(
+            self.device)
         corr_delta = torch.sqrt(((corr_a - corr_b) ** 2))
         loss = sim_label * (self.m - corr_delta) + (1. - sim_label) * corr_delta
 
@@ -126,13 +127,6 @@ class TrainerMultiple(nn.Module):
         images = images.to(self.device, dtype=torch.float32)
         labels = labels.to(self.device, dtype=torch.float32)
 
-        print(f"Images device: {images.device}, dtype: {images.dtype}")
-        print(f"Labels device: {labels.device}, dtype: {labels.dtype}")
-
-        # Check model weights
-        print(f"Model encoder device: {next(self.unet.encoder.parameters()).device}")
-        print(f"Model encoder dtype: {next(self.unet.encoder.parameters()).dtype}")
-
         self.unet.train()
         self.optimizer.zero_grad()
 
@@ -141,7 +135,6 @@ class TrainerMultiple(nn.Module):
 
         alpha = (1 - self.alpha) * torch.rand((len(images), 1, 1, 1)).to(self.device) + self.alpha
         residuals = alpha * residuals
-        print(f"Residuals device: {residuals.device}, dtype: {residuals.dtype}")
 
         f_mean = residuals[labels.bool()].mean(0, keepdims=True).to(self.device, dtype=torch.float32)
         r_mean = residuals[~labels.bool()].mean(0, keepdims=True).to(self.device, dtype=torch.float32)

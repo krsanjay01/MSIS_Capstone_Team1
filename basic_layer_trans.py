@@ -104,7 +104,6 @@ class DeConv_Layer(nn.Module):
 class Conv_Block(nn.Module):
     def __init__(self, in_c, out_c, activ=None, pool=None, norm='bn', device='cpu'):
         super(Conv_Block, self).__init__()
-        print(f"Initializing Conv_Block: in_c = {in_c}, out_c = {out_c}")
         self.device = device
 
         # Add conditional logic to skip batch norm for 1x1 spatial dimensions
