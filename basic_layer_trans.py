@@ -111,7 +111,7 @@ class Conv_Block(nn.Module):
                              padding=1)
 
         if pool == 'up_stride':
-            self.pool = DeConv_Layer(out_c, out_c, 2, 2, norm=norm, device=self.device)
+            self.pool = DeConv_Layer(out_c, out_c, 2, 2, norm=norm)
         elif pool == 'up_bilinear':
             self.pool = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True).to(self.device)
         elif pool == 'up_nearest':
