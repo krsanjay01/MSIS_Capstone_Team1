@@ -79,6 +79,12 @@ class UnetWithTransformer(nn.Module):
         # Load the weights from the .npz file
         pretrained_weights = np.load(pretrained_path)
 
+        for name, param in self.encoder.named_parameters():
+            print(f"Model layer name: {name}")
+
+        for key in pretrained_weights.keys():
+            print(f"Weight file layer name: {key}")
+
         # Loop over all layers and assign weights from the .npz file
         for name, param in self.encoder.named_parameters():
             layer_name = name.replace('.', '/')
