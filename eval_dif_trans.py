@@ -1,7 +1,7 @@
 import argparse
 import torch
 
-import data_dif as data
+import data as data
 from trainer_dif_trans import TrainerMultiple
 from utils import *
 import pickle
