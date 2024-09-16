@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import os
-os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
 
 # Conv_Layer class with device parameter
 class Conv_Layer(nn.Module):

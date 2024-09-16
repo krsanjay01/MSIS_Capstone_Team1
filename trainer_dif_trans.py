@@ -129,25 +129,25 @@ class TrainerMultiple(nn.Module):
     def train_step(self, images, labels):
 
         # Ensure the images and labels are moved to the correct device and have the right type
-        images = images.to(self.device, dtype=torch.float32)
-        labels = labels.to(self.device, dtype=torch.float32)
+        images = images.to(self.device)
+        labels = labels.to(self.device)
 
         self.unet.train()
         self.optimizer.zero_grad()
 
         # Ensure residuals are on the correct device
-        residuals = self.denoiser.denoise(images).detach().to(self.device, dtype=torch.float32)
+        residuals = self.denoiser.denoise(images).detach().to(self.device)
 
         alpha = (1 - self.alpha) * torch.rand((len(images), 1, 1, 1)).to(self.device) + self.alpha
         residuals = alpha * residuals
 
-        f_mean = residuals[labels.bool()].mean(0, keepdims=True).to(self.device, dtype=torch.float32)
-        r_mean = residuals[~labels.bool()].mean(0, keepdims=True).to(self.device, dtype=torch.float32)
+        f_mean = residuals[labels.bool()].mean(0, keepdims=True).to(self.device)
+        r_mean = residuals[~labels.bool()].mean(0, keepdims=True).to(self.device)
 
         residuals = torch.cat((residuals, f_mean, r_mean), dim=0)
 
-        dmy = self.prep_noise().to(self.device, dtype=torch.float32)
-        out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device, dtype=torch.float32)
+        dmy = self.prep_noise().to(self.device)
+        out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
 
         corr = self.corr_fun(out, residuals)
 
@@ -158,10 +158,10 @@ class TrainerMultiple(nn.Module):
 
         # Update fingerprint
         if self.fingerprint is None:
-            self.fingerprint = out[0:1].detach().to(self.device, dtype=torch.float32)
+            self.fingerprint = out[0:1].detach().to(self.device)
         else:
             self.fingerprint = (
-                        self.fingerprint * 0.99 + out[0:1].detach().to(self.device, dtype=torch.float32) * (1 - 0.99))
+                        self.fingerprint * 0.99 + out[0:1].detach().to(self.device) * (1 - 0.99))
 
         corr = self.corr_fun(self.fingerprint.repeat(len(images), 1, 1, 1), residuals[:-2]).mean((1, 2, 3))
 
