@@ -6,9 +6,9 @@ from PIL import Image
 
 # Define augmentation transforms
 train_transforms = transforms.Compose([
-    transforms.RandomHorizontalFlip(),       # Randomly flip the images horizontally
-    transforms.RandomRotation(10),           # Randomly rotate the images by 10 degrees
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Adjust brightness, contrast, etc.
+    #transforms.RandomHorizontalFlip(),       # Randomly flip the images horizontally
+    #transforms.RandomRotation(10),           # Randomly rotate the images by 10 degrees
+    #transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Adjust brightness, contrast, etc.
     transforms.ToTensor(),                   # Convert the image to a PyTorch tensor
 ])
 
