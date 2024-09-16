@@ -73,7 +73,7 @@ class UnetWithTransformer(nn.Module):
                 for param in block.parameters():
                     param.requires_grad = False
 
-    def np2th(weights, conv=False):
+    def np2th(self, weights, conv=False):
         """Possibly convert HWIO to OIHW."""
         if conv:
             weights = weights.transpose([3, 2, 0, 1])
