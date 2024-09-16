@@ -59,9 +59,8 @@ class Conv_Layer(nn.Module):
 # DeConv_Layer with device parameter
 class DeConv_Layer(nn.Module):
     def __init__(self, in_c, out_c, kernel, stride, padding=0,
-                 activ=None, norm=None, bias=True, device='cpu'):
+                 activ=None, norm=None, bias=True):
         super(DeConv_Layer, self).__init__()
-        self.device = device
         '''self.deconv = nn.ConvTranspose2d(in_c, out_c, kernel_size=kernel,
                                          stride=stride, padding=padding, bias=bias).to(self.device)'''
 
