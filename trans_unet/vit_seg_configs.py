@@ -17,7 +17,7 @@ def get_b16_config():
     config.resnet_pretrained_path = None
     config.pretrained_path = '/content/drive/MyDrive/model/imagenet21k_ViT-B_16.npz'
     #config.pretrained_path = 'model/vit_checkpoint/imagenet21k/imagenet21K_ViT-B_16.npz'
-    config.patch_size = 14
+    config.patch_size = 16
 
     config.decoder_channels = (256, 128, 64, 16)
     config.n_classes = 2
