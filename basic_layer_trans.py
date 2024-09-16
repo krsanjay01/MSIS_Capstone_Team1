@@ -50,7 +50,6 @@ class Conv_Layer(nn.Module):
             self.conv.add_module('activ', activ)
 
     def forward(self, x):
-        x = x.to(self.device)  # Ensure x is on the correct device
         x = self.conv(x)
 
         return x
@@ -70,31 +69,30 @@ class DeConv_Layer(nn.Module):
         layers = [self.deconv]
 
         if norm == 'bn':
-            layers.append(nn.BatchNorm2d(out_c).to(self.device))
+            layers.append(nn.BatchNorm2d(out_c))
         elif norm == 'ln':
-            layers.append(nn.LayerNorm([out_c, 1, 1]).to(self.device))
+            layers.append(nn.LayerNorm([out_c, 1, 1]))
 
         if activ == 'leak':
-            layers.append(nn.LeakyReLU(inplace=True).to(self.device))
+            layers.append(nn.LeakyReLU(inplace=True))
         elif activ == 'relu':
-            layers.append(nn.ReLU(inplace=True).to(self.device))
+            layers.append(nn.ReLU(inplace=True))
         elif activ == 'pleak':
-            layers.append(nn.PReLU().to(self.device))
+            layers.append(nn.PReLU())
         elif activ == 'gelu':
-            layers.append(nn.GELU().to(self.device))
+            layers.append(nn.GELU())
         elif activ == 'selu':
-            layers.append(nn.SELU().to(self.device))
+            layers.append(nn.SELU())
         elif activ == 'sigmoid':
-            layers.append(nn.Sigmoid().to(self.device))
+            layers.append(nn.Sigmoid())
         elif activ == 'softmax':
-            layers.append(nn.Softmax(dim=1).to(self.device))
+            layers.append(nn.Softmax(dim=1))
         elif activ == 'tanh':
-            layers.append(nn.Tanh().to(self.device))
+            layers.append(nn.Tanh())
 
         self.deconv = nn.Sequential(*layers)
 
     def forward(self, x):
-        x = x.to(self.device)
         return self.deconv(x)
 
 
@@ -126,7 +124,6 @@ class Conv_Block(nn.Module):
 
     def forward(self, x):
         # Apply conv layers normally but conditionally apply batch norm if spatial dims > 1x1
-        x = x.to(self.device)  # Ensure x is on the correct device
         x = self.c1(x)
         if x.size(2) > 1 and x.size(3) > 1:
             x = self.c2(x)  # Apply second conv and norm only if spatial dims > 1x1
