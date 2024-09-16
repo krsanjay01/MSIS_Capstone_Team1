@@ -34,11 +34,9 @@ class UnetWithTransformer(nn.Module):
         self.skip = []
 
         # Use the Transformer as encoder
-        vis_transformer = VisionTransformer(config,img_size=224)
-        transformer = vis_transformer.get_transformer()
-        self.transformer = transformer.to(self.device)  # Move to device
+        self.transformer = Transformer(config,img_size=224, vis=vis).to(self.device)  # Move to device
 
-        self.encoder = transformer.to(self.device)  # Ensure the encoder is on the correct device
+        self.encoder = self.transformer.to(self.device)  # Ensure the encoder is on the correct device
         # Freeze the first N layers of the transformer encoder
         self.freeze_transformer_layers(num_layers_to_freeze=2)
 
@@ -53,8 +51,7 @@ class UnetWithTransformer(nn.Module):
 
         # Load pre-trained weights if a path is provided
         if config.pretrained_path and train:
-            #self.load_pretrained_weights(config.pretrained_path)
-            vis_transformer.load_from(weights=np.load(config.pretrained_path))
+            self.load_pretrained_weights(config.pretrained_path)
 
         # Initialize the decoder and final layer as in the original model
         self.check_concat(concat)
