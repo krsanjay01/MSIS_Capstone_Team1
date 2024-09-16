@@ -131,7 +131,7 @@ class UnetWithTransformer(nn.Module):
                            activ=self.activ, pool='up_stride'))
 
         # Define a convolution layer to reduce skip tensor channels before concatenation
-        self.conv_skip = nn.Conv2d(in_channels=512, out_channels=32, kernel_size=1)  # Example channels
+        self.conv_skip = nn.Conv2d(in_channels=512, out_channels=32, kernel_size=1).to(self.device)  # Example channels
 
         self.dec.append(Conv_Block(self.concat[0] * self.arch, self.arch, activ=self.activ))
 
@@ -146,7 +146,7 @@ class UnetWithTransformer(nn.Module):
 
     def forward(self, img):
         # Ensure img is on the correct device and dtype
-        img = img.to(self.device, dtype=torch.float32)
+        img = img.to(self.device)
         h_skip = []
 
         # Move encoder Conv_Block layers to MPS device
@@ -196,7 +196,7 @@ class UnetWithTransformer(nn.Module):
                     x = channel_adjustment_layer(x)
 
             # Apply decoder layer
-            _, x = self.dec[l_idx](x)
+            _, x = self.dec[l_idx](x.to(self.device))
 
         # Final projection to output channels
         h = self.final(x)
