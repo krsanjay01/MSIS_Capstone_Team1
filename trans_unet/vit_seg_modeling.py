@@ -248,10 +248,8 @@ class Encoder(nn.Module):
 
     def forward(self, hidden_states):
         attn_weights = []
-        i=0
+
         for layer_block in self.layer:
-            i +=1
-            print("Executing Transformer Layer: ", i)
             hidden_states, weights = layer_block(hidden_states)
             if self.vis:
                 attn_weights.append(weights)
@@ -266,6 +264,7 @@ class Transformer(nn.Module):
         self.encoder = Encoder(config, vis)
 
     def forward(self, input_ids):
+        print('In Transformer forward method')
         embedding_output, features = self.embeddings(input_ids)
         encoded, attn_weights = self.encoder(embedding_output)  # (B, n_patch, hidden)
         return encoded, attn_weights, features
