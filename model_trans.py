@@ -176,6 +176,7 @@ class UnetWithTransformer(nn.Module):
 
         # Decoder loop with concatenation and skip connections
         for l_idx in range(len(self.dec)):
+            x = x.to(self.device)
             if self.concat[-(l_idx + 1)] == 2:
                 # Concatenate skip connection from encoder
                 skip_tensor = h_skip[-(l_idx + 1)]

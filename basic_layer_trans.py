@@ -50,6 +50,7 @@ class Conv_Layer(nn.Module):
             self.conv.add_module('activ', activ)
 
     def forward(self, x):
+        x = x.to(self.device)  # Ensure x is on the correct device
         x = self.conv(x)
 
         return x
@@ -126,6 +127,7 @@ class Conv_Block(nn.Module):
 
     def forward(self, x):
         # Apply conv layers normally but conditionally apply batch norm if spatial dims > 1x1
+        x = x.to(self.device)  # Ensure x is on the correct device
         x = self.c1(x)
         if x.size(2) > 1 and x.size(3) > 1:
             x = self.c2(x)  # Apply second conv and norm only if spatial dims > 1x1
