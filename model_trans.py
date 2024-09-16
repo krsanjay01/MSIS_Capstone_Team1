@@ -84,41 +84,42 @@ class UnetWithTransformer(nn.Module):
         Load the pre-trained ViT weights from the .npz file using a custom method based on VisionTransformer's load_from().
         """
         # Load the weights from the .npz file
-        pretrained_weights = np.load(pretrained_path)
+        with torch.no_grad():
+            pretrained_weights = np.load(pretrained_path)
 
-        # Load embeddings
-        self.transformer.embeddings.patch_embeddings.weight.copy_(self.np2th(pretrained_weights["embedding/kernel"], True))
-        self.transformer.embeddings.patch_embeddings.bias.copy_(self.np2th(pretrained_weights["embedding/bias"]))
+            # Load embeddings
+            self.transformer.embeddings.patch_embeddings.weight.copy_(self.np2th(pretrained_weights["embedding/kernel"], True))
+            self.transformer.embeddings.patch_embeddings.bias.copy_(self.np2th(pretrained_weights["embedding/bias"]))
 
-        # Load position embeddings
-        posemb = self.np2th(pretrained_weights["Transformer/posembed_input/pos_embedding"])
-        posemb_new = self.transformer.embeddings.position_embeddings
+            # Load position embeddings
+            posemb = self.np2th(pretrained_weights["Transformer/posembed_input/pos_embedding"])
+            posemb_new = self.transformer.embeddings.position_embeddings
 
-        if posemb.size() == posemb_new.size():
-            self.transformer.embeddings.position_embeddings.copy_(posemb)
-        elif posemb.size()[1] - 1 == posemb_new.size()[1]:
-            posemb = posemb[:, 1:]
-            self.transformer.embeddings.position_embeddings.copy_(posemb)
-        else:
-            ntok_new = posemb_new.size(1)
-            gs_old = int(np.sqrt(len(posemb[0, 1:])))
-            gs_new = int(np.sqrt(ntok_new))
-            print(f"Resizing grid-size from {gs_old} to {gs_new}")
-            posemb_grid = posemb[0, 1:].reshape(gs_old, gs_old, -1)
-            zoom = (gs_new / gs_old, gs_new / gs_old, 1)
-            posemb_grid = ndimage.zoom(posemb_grid, zoom, order=1)
-            posemb_grid = posemb_grid.reshape(1, gs_new * gs_new, -1)
-            self.transformer.embeddings.position_embeddings.copy_(self.np2th(posemb_grid))
+            if posemb.size() == posemb_new.size():
+                self.transformer.embeddings.position_embeddings.copy_(posemb)
+            elif posemb.size()[1] - 1 == posemb_new.size()[1]:
+                posemb = posemb[:, 1:]
+                self.transformer.embeddings.position_embeddings.copy_(posemb)
+            else:
+                ntok_new = posemb_new.size(1)
+                gs_old = int(np.sqrt(len(posemb[0, 1:])))
+                gs_new = int(np.sqrt(ntok_new))
+                print(f"Resizing grid-size from {gs_old} to {gs_new}")
+                posemb_grid = posemb[0, 1:].reshape(gs_old, gs_old, -1)
+                zoom = (gs_new / gs_old, gs_new / gs_old, 1)
+                posemb_grid = ndimage.zoom(posemb_grid, zoom, order=1)
+                posemb_grid = posemb_grid.reshape(1, gs_new * gs_new, -1)
+                self.transformer.embeddings.position_embeddings.copy_(self.np2th(posemb_grid))
 
-        # Load encoder layers
-        for i, block in enumerate(self.transformer.encoder.layer):
-            block.load_from(pretrained_weights, i)
+            # Load encoder layers
+            for i, block in enumerate(self.transformer.encoder.layer):
+                block.load_from(pretrained_weights, i)
 
-        # Load encoder norm layer
-        self.transformer.encoder.encoder_norm.weight.copy_(self.np2th(pretrained_weights["Transformer/encoder_norm/scale"]))
-        self.transformer.encoder.encoder_norm.bias.copy_(self.np2th(pretrained_weights["Transformer/encoder_norm/bias"]))
+            # Load encoder norm layer
+            self.transformer.encoder.encoder_norm.weight.copy_(self.np2th(pretrained_weights["Transformer/encoder_norm/scale"]))
+            self.transformer.encoder.encoder_norm.bias.copy_(self.np2th(pretrained_weights["Transformer/encoder_norm/bias"]))
 
-        print("Pre-trained weights loaded successfully.")
+            print("Pre-trained weights loaded successfully.")
 
     def check_concat(self, con):
         # Ensure con is not None and is a list
