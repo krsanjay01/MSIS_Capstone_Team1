@@ -12,6 +12,7 @@ from os.path import join as pjoin
 import torch
 import torch.nn as nn
 import numpy as np
+from tensorboard.compat.tensorflow_stub.dtypes import int32
 
 from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNorm
 from torch.nn.modules.utils import _pair
@@ -247,7 +248,10 @@ class Encoder(nn.Module):
 
     def forward(self, hidden_states):
         attn_weights = []
+        i=0
         for layer_block in self.layer:
+            i +=1
+            print("Executing Transformer Layer: ", i)
             hidden_states, weights = layer_block(hidden_states)
             if self.vis:
                 attn_weights.append(weights)
