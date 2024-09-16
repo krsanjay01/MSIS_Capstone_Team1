@@ -123,7 +123,7 @@ class Mlp(nn.Module):
 class Embeddings(nn.Module):
     """Construct the embeddings from patch, position embeddings.
     """
-    def __init__(self, config, img_size, in_channels=16):
+    def __init__(self, config, img_size, in_channels=3):
         super(Embeddings, self).__init__()
         self.hybrid = None
         self.config = config
@@ -154,7 +154,7 @@ class Embeddings(nn.Module):
             )
             in_channels = self.hybrid_model.width * 16
 
-        self.patch_embeddings = Conv2d(in_channels=1024,
+        self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
                                        kernel_size=patch_size,
                                        stride=patch_size)
