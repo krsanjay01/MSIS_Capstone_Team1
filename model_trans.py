@@ -3,6 +3,7 @@ from torch import nn
 import numpy as np
 import torch
 from trans_unet.vit_seg_modeling import Transformer  # Importing transformer and encoder from vit_seg_modeling.py
+from trans_unet.vit_seg_modeling import VisionTransformer
 from trans_unet.vit_seg_configs import get_r50_b16_config
 from trans_unet.vit_seg_configs import get_b16_config
 
@@ -33,7 +34,8 @@ class UnetWithTransformer(nn.Module):
         self.skip = []
 
         # Use the Transformer as encoder
-        transformer = Transformer(config, img_size=224, vis=vis)
+        vis_transformer = VisionTransformer(config,img_size=224)
+        transformer = vis_transformer.get_transformer()
         self.transformer = transformer.to(self.device)  # Move to device
 
         self.encoder = transformer.to(self.device)  # Ensure the encoder is on the correct device
@@ -51,7 +53,8 @@ class UnetWithTransformer(nn.Module):
 
         # Load pre-trained weights if a path is provided
         if config.pretrained_path and train:
-            self.load_pretrained_weights(config.pretrained_path)
+            #self.load_pretrained_weights(config.pretrained_path)
+            vis_transformer.load_from(weights=np.load(config.pretrained_path))
 
         # Initialize the decoder and final layer as in the original model
         self.check_concat(concat)

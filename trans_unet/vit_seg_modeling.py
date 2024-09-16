@@ -403,6 +403,9 @@ class VisionTransformer(nn.Module):
         logits = self.segmentation_head(x)
         return logits
 
+    def get_transformer(self):
+        return self.transformer
+
     def load_from(self, weights):
         with torch.no_grad():
 
