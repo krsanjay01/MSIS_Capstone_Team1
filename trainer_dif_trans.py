@@ -9,6 +9,8 @@ from dcnn_loader import load_denoiser
 import model_trans
 from utils import calc_even_size, produce_spectrum
 
+from torch.optim import lr_scheduler
+
 import torch.nn.functional as F
 
 relu = nn.ReLU()
@@ -86,6 +88,10 @@ class TrainerMultiple(nn.Module):
             {'params': decoder_params, 'lr': 1e-4},  # Lower learning rate for UNet decoder
         ], weight_decay=1e-5)
 
+        # Initialize the learning rate scheduler
+        self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min', factor=0.1, patience=10,
+                                                        verbose=True)
+
         self.loss_mse = nn.MSELoss()
 
         self.init_train()
@@ -156,6 +162,11 @@ class TrainerMultiple(nn.Module):
 
         loss.backward()
         self.optimizer.step()
+
+        # Update the learning rate scheduler based on the current loss
+        self.scheduler.step(loss)
+        for param_group in self.optimizer.param_groups:
+            print(f"Learning Rate: {param_group['lr']}")
 
         # Update fingerprint
         if self.fingerprint is None:
