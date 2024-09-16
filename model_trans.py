@@ -6,6 +6,7 @@ from trans_unet.vit_seg_modeling import Transformer  # Importing transformer and
 from trans_unet.vit_seg_modeling import VisionTransformer
 from trans_unet.vit_seg_configs import get_r50_b16_config
 from trans_unet.vit_seg_configs import get_b16_config
+from scipy import ndimage
 
 
 class UnetWithTransformer(nn.Module):
@@ -72,25 +73,50 @@ class UnetWithTransformer(nn.Module):
                 for param in block.parameters():
                     param.requires_grad = False
 
+    def np2th(weights, conv=False):
+        """Possibly convert HWIO to OIHW."""
+        if conv:
+            weights = weights.transpose([3, 2, 0, 1])
+        return torch.from_numpy(weights)
+
     def load_pretrained_weights(self, pretrained_path):
         """
-        Load the pre-trained ViT weights from the .npz file.
+        Load the pre-trained ViT weights from the .npz file using a custom method based on VisionTransformer's load_from().
         """
         # Load the weights from the .npz file
         pretrained_weights = np.load(pretrained_path)
 
-        for name, param in self.encoder.named_parameters():
-            print(f"Model layer name: {name}")
+        # Load embeddings
+        self.transformer.embeddings.patch_embeddings.weight.copy_(self.np2th(pretrained_weights["embedding/kernel"], conv=True))
+        self.transformer.embeddings.patch_embeddings.bias.copy_(self.np2th(pretrained_weights["embedding/bias"]))
 
-        for key in pretrained_weights.keys():
-            print(f"Weight file layer name: {key}")
+        # Load position embeddings
+        posemb = self.np2th(pretrained_weights["Transformer/posembed_input/pos_embedding"])
+        posemb_new = self.transformer.embeddings.position_embeddings
 
-        # Loop over all layers and assign weights from the .npz file
-        for name, param in self.encoder.named_parameters():
-            layer_name = name.replace('.', '/')
-            if layer_name in pretrained_weights:
-                print(f"Loading weight for layer: {layer_name}")
-                param.data = torch.from_numpy(pretrained_weights[layer_name])
+        if posemb.size() == posemb_new.size():
+            self.transformer.embeddings.position_embeddings.copy_(posemb)
+        elif posemb.size()[1] - 1 == posemb_new.size()[1]:
+            posemb = posemb[:, 1:]
+            self.transformer.embeddings.position_embeddings.copy_(posemb)
+        else:
+            ntok_new = posemb_new.size(1)
+            gs_old = int(np.sqrt(len(posemb[0, 1:])))
+            gs_new = int(np.sqrt(ntok_new))
+            print(f"Resizing grid-size from {gs_old} to {gs_new}")
+            posemb_grid = posemb[0, 1:].reshape(gs_old, gs_old, -1)
+            zoom = (gs_new / gs_old, gs_new / gs_old, 1)
+            posemb_grid = ndimage.zoom(posemb_grid, zoom, order=1)
+            posemb_grid = posemb_grid.reshape(1, gs_new * gs_new, -1)
+            self.transformer.embeddings.position_embeddings.copy_(self.np2th(posemb_grid))
+
+        # Load encoder layers
+        for i, block in enumerate(self.transformer.encoder.layer):
+            block.load_from(pretrained_weights, i)
+
+        # Load encoder norm layer
+        self.transformer.encoder.encoder_norm.weight.copy_(self.np2th(pretrained_weights["Transformer/encoder_norm/scale"]))
+        self.transformer.encoder.encoder_norm.bias.copy_(self.np2th(pretrained_weights["Transformer/encoder_norm/bias"]))
 
         print("Pre-trained weights loaded successfully.")
 
