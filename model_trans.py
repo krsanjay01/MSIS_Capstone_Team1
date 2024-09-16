@@ -52,7 +52,7 @@ class UnetWithTransformer(nn.Module):
 
         # Load pre-trained weights if a path is provided
         if config.pretrained_path and train:
-            self.load_pretrained_weights(weights=np.load(config.pretrained_path))
+            self.load_pretrained_weights(np.load(config.pretrained_path))
 
         # Initialize the decoder and final layer as in the original model
         self.check_concat(concat)
