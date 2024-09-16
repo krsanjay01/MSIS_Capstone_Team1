@@ -24,7 +24,7 @@ class UnetWithTransformer(nn.Module):
         # If config is None, use a default configuration (like ViT-B_16)
         if config is None:
             config = get_b16_config()  # Initialize default ViT-B_16 config
-            config.img_size = 200  # Set image size to 200x200
+            config.img_size = 224  # Set image size to 200x200
 
         self.arch_n = []
         self.enc = []
@@ -33,12 +33,15 @@ class UnetWithTransformer(nn.Module):
         self.skip = []
 
         # Use the Transformer as encoder
-        transformer = Transformer(config, img_size=200, vis=vis)
+        transformer = Transformer(config, img_size=224, vis=vis)
         self.transformer = transformer.to(self.device)  # Move to device
 
         self.encoder = transformer.to(self.device)  # Ensure the encoder is on the correct device
         # Freeze the first N layers of the transformer encoder
         self.freeze_transformer_layers(num_layers_to_freeze=2)
+
+        # Layer to adjust the number of channels before feeding into transformer
+        self.channel_adjustment = nn.Conv2d(512, 1024, kernel_size=1, stride=1).to(self.device)  # 512 -> 1024 channels
 
         # Throttling layer: Converts transformer output to match decoder input dimensions
         self.throttling_layer = nn.Sequential(
@@ -116,8 +119,8 @@ class UnetWithTransformer(nn.Module):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
 
-            # Add a layer to reduce channels from 512 (output of encoder) to 32 (expected by transformer)
-            self.reduce_channels = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=1, stride=1).to(self.device)
+        # Add a layer to reduce channels from 512 (output of encoder) to 512 (expected by transformer)
+        self.reduce_channels = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=1, stride=1).to(self.device)
 
         self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
 
@@ -152,17 +155,18 @@ class UnetWithTransformer(nn.Module):
             _, img = enc_layer(img)  # We only want to pass `img`, the second element
             h_skip.append(img)  # Save the output of each encoder layer for skip connections
 
-        # Apply the Conv2d layer to reduce the number of channels
-        img = self.reduce_channels(img)
+        # **Apply the Conv2d layer to reduce the number of channels**
+        img = self.reduce_channels(img)  # Reduce channels from 512 to 1024
+        print(f"Shape after reduce_channels: {img.shape}")  # Add print statement
+
+        # **Ensure the spatial resolution is aligned with the Vision Transformer input**
+        img_size = 224  # Adjust this size according to your transformer patch size
+        img = F.interpolate(img, size=(img_size, img_size), mode='bilinear', align_corners=True)
+
+        print(f"Shape before Transformer input: {img.shape}")  # Add print statement
 
         # Transformer encoder step
         x, attn_weights, features = self.encoder(img.to(self.device))
-
-        # Save features to h_skip for later concatenation
-        if features is not None:
-            feature_shapes = [f.shape for f in features if isinstance(f, torch.Tensor)]
-        else:
-            feature_shapes = []
 
         # Reshape transformer output
         batch_size, num_patches, hidden_size = x.shape

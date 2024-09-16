@@ -3,7 +3,7 @@ import ml_collections
 def get_b16_config():
     """Returns the ViT-B/16 configuration."""
     config = ml_collections.ConfigDict()
-    config.patches = ml_collections.ConfigDict({'size': (8,8)})
+    config.patches = ml_collections.ConfigDict({'size': (14,14)})
     config.hidden_size = 512
     config.transformer = ml_collections.ConfigDict()
     config.transformer.mlp_dim = 3072
@@ -15,9 +15,9 @@ def get_b16_config():
     config.classifier = 'seg'
     config.representation_size = None
     config.resnet_pretrained_path = None
-    config.pretrained_path = '/content/MSIS_Capstone_Team1/MSIS_Capstone_Team1/model/vit_checkpoint/imagenet21k/imagenet21k_ViT-B_16.npz'
-    #config.pretrained_path = 'model/vit_checkpoint/imagenet21k/imagenet21K_ViT-B_16.npz'
-    config.patch_size = 16
+    #config.pretrained_path = '/content/MSIS_Capstone_Team1/MSIS_Capstone_Team1/model/vit_checkpoint/imagenet21k/imagenet21k_ViT-B_16.npz'
+    config.pretrained_path = 'model/vit_checkpoint/imagenet21k/imagenet21K_ViT-B_16.npz'
+    config.patch_size = 14
 
     config.decoder_channels = (256, 128, 64, 16)
     config.n_classes = 2
@@ -28,7 +28,7 @@ def get_b16_config():
 def get_testing():
     """Returns a minimal configuration for testing."""
     config = ml_collections.ConfigDict()
-    config.patches = ml_collections.ConfigDict({'size': (16, 16)})
+    config.patches = ml_collections.ConfigDict({'size': (14, 14)})
     config.hidden_size = 1
     config.transformer = ml_collections.ConfigDict()
     config.transformer.mlp_dim = 1

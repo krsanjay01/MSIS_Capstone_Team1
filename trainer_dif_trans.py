@@ -69,16 +69,21 @@ class TrainerMultiple(nn.Module):
                                activ='leak', depth=self.depth, concat=self.concat, train=train).to(self.device)
         #self.optimizer = optim.AdamW(self.unet.parameters(), lr=1e-5, weight_decay=1e-5)
 
-        # Collect parameters from each decoder layer (since it's a list of modules)
+        # Optimizer with different learning rates for different parts of the model
+        encoder_params = []
         decoder_params = []
+
+        # Collect parameters from each encoder and decoder layer
+        for layer in self.unet.enc:
+            encoder_params += list(layer.parameters())
         for layer in self.unet.dec:
             decoder_params += list(layer.parameters())
 
-        # Optimizer with different learning rates for different parts of the model
-        self.optimizer = optim.RMSprop([
-            {'params': self.unet.encoder.parameters(), 'lr': 1e-4},
-            # Lower learning rate for Transformer
-            {'params': decoder_params, 'lr': 1e-4},  # Higher learning rate for UNet decoder
+        # Optimizer setup
+        self.optimizer = optim.AdamW([
+            {'params': encoder_params, 'lr': 1e-5},  # Lower learning rate for UNet encoder
+            {'params': self.unet.transformer.parameters(), 'lr': 1e-3},  # Higher learning rate for Transformer
+            {'params': decoder_params, 'lr': 1e-5},  # Lower learning rate for UNet decoder
         ], weight_decay=1e-5)
 
         self.loss_mse = nn.MSELoss()
@@ -430,12 +435,13 @@ class TrainerSingle(nn.Module):
         for layer in self.unet.decoder:
             decoder_params += list(layer.parameters())
 
-        # Optimizer with different learning rates for different parts of the model
-        self.optimizer = optim.AdamW([
-            {'params': self.unet.encoder.parameters, 'lr': 1e-5},
-            # Lower learning rate for Transformer
-            {'params': decoder_params, 'lr': 1e-4},  # Higher learning rate for UNet decoder
-        ], weight_decay=1e-5)
+            # Optimizer with different learning rates for different parts of the model
+            self.optimizer = optim.AdamW([
+                {'params': self.unet.enc.parameters(), 'lr': 1e-5},
+                # Lower learning rate for Transformer
+                {'params': self.unet.transformer.parameters(), 'lr': 1e-3},
+                {'params': decoder_params, 'lr': 1e-5},  # Higher learning rate for UNet decoder
+            ], weight_decay=1e-5)
 
         self.loss_mse = nn.MSELoss()
 
