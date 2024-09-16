@@ -87,7 +87,7 @@ class UnetWithTransformer(nn.Module):
         pretrained_weights = np.load(pretrained_path)
 
         # Load embeddings
-        self.transformer.embeddings.patch_embeddings.weight.copy_(self.np2th(pretrained_weights["embedding/kernel"], conv=True))
+        self.transformer.embeddings.patch_embeddings.weight.copy_(self.np2th(pretrained_weights["embedding/kernel"], True))
         self.transformer.embeddings.patch_embeddings.bias.copy_(self.np2th(pretrained_weights["embedding/bias"]))
 
         # Load position embeddings
