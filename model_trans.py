@@ -153,8 +153,8 @@ class UnetWithTransformer(nn.Module):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
 
-        # Add a layer to reduce channels from 512 (output of encoder) to 512 (expected by transformer)
-        self.reduce_channels = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=1, stride=1).to(self.device)
+        # Add a layer to reduce channels from 512 (output of encoder) to 3 (expected by transformer)
+        self.reduce_channels = nn.Conv2d(in_channels=512, out_channels=3, kernel_size=1, stride=1).to(self.device)
 
         self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
 
@@ -190,7 +190,7 @@ class UnetWithTransformer(nn.Module):
             h_skip.append(img)  # Save the output of each encoder layer for skip connections
 
         # **Apply the Conv2d layer to reduce the number of channels**
-        img = self.reduce_channels(img)  # Reduce channels from 512 to 1024
+        img = self.reduce_channels(img)  # Reduce channels from 512 to 3
 
         # **Ensure the spatial resolution is aligned with the Vision Transformer input**
         img_size = 224  # Adjust this size according to your transformer patch size
