@@ -193,7 +193,7 @@ class UnetWithTransformer(nn.Module):
         img = self.reduce_channels(img)  # Reduce channels from 512 to 3
 
         # **Ensure the spatial resolution is aligned with the Vision Transformer input**
-        img_size = 224  # Adjust this size according to your transformer patch size
+        img_size = 256  # Adjust this size according to your transformer patch size
         img = F.interpolate(img, size=(img_size, img_size), mode='bilinear', align_corners=True)
 
         # Transformer encoder step
