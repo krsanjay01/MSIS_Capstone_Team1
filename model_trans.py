@@ -157,13 +157,10 @@ class UnetWithTransformer(nn.Module):
 
         # **Apply the Conv2d layer to reduce the number of channels**
         img = self.reduce_channels(img)  # Reduce channels from 512 to 1024
-        print(f"Shape after reduce_channels: {img.shape}")  # Add print statement
 
         # **Ensure the spatial resolution is aligned with the Vision Transformer input**
         img_size = 224  # Adjust this size according to your transformer patch size
         img = F.interpolate(img, size=(img_size, img_size), mode='bilinear', align_corners=True)
-
-        print(f"Shape before Transformer input: {img.shape}")  # Add print statement
 
         # Transformer encoder step
         x, attn_weights, features = self.encoder(img.to(self.device))
