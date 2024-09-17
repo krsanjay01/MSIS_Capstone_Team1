@@ -258,9 +258,9 @@ class Encoder(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, config, img_size, vis):
+    def __init__(self, config, img_size, vis, in_channels=3):
         super(Transformer, self).__init__()
-        self.embeddings = Embeddings(config, img_size=img_size)
+        self.embeddings = Embeddings(config, img_size=img_size, in_channels=in_channels)
         self.encoder = Encoder(config, vis)
 
     def forward(self, input_ids):
@@ -366,6 +366,14 @@ class DecoderCup(nn.Module):
         self.blocks = nn.ModuleList(blocks)
 
     def forward(self, hidden_states, features=None):
+
+        if features is not None:
+            print(f"Number of features: {len(features)}")
+        else:
+            print("Features are None")
+
+        print(f"self.config.n_skip: {self.config.n_skip}")
+
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
         x = hidden_states.permute(0, 2, 1)
