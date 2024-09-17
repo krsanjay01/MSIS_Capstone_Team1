@@ -10,7 +10,8 @@ import math
 from os.path import join as pjoin
 
 import torch
-import torch.nn as nn
+from torch import nn
+from torch.nn import functional as F
 import numpy as np
 from tensorboard.compat.tensorflow_stub.dtypes import int32
 
@@ -145,7 +146,7 @@ class Embeddings(nn.Module):
             self.hybrid_model = ResNetV2(block_units=config.resnet.num_layers, width_factor=config.resnet.width_factor)
             # Modify the first convolutional layer of ResNet to accept 32 channels
             self.hybrid_model.root.conv = nn.Conv2d(
-                in_channels=32,  # Change from 3 to 32
+                in_channels=3,  # Change from 3 to 32
                 out_channels=self.hybrid_model.root.conv.out_channels,
                 kernel_size=self.hybrid_model.root.conv.kernel_size,
                 stride=self.hybrid_model.root.conv.stride,
@@ -322,7 +323,13 @@ class DecoderBlock(nn.Module):
     def forward(self, x, skip=None):
         x = self.up(x)
         if skip is not None:
+            # Ensure spatial dimensions of skip and x match
+            if skip.size(2) != x.size(2) or skip.size(3) != x.size(3):
+                skip = F.interpolate(skip, size=(x.size(2), x.size(3)), mode='bilinear', align_corners=True)
+
+            # Concatenate along the channel dimension
             x = torch.cat([x, skip], dim=1)
+
         x = self.conv1(x)
         x = self.conv2(x)
         return x

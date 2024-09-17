@@ -14,6 +14,7 @@ from torch.optim import lr_scheduler
 import torch.nn.functional as F
 from trans_unet.vit_seg_modeling import VisionTransformer
 from trans_unet.vit_seg_configs import get_b16_config
+from trans_unet.vit_seg_configs import get_r50_b16_config
 
 relu = nn.ReLU()
 
@@ -83,8 +84,8 @@ class TrainerMultiple(nn.Module):
         nn.init.zeros_(self.channel_reduction.bias)
 
         # Configuration
-        self.config = get_b16_config()
-        self.config.img_size = 256
+        self.config = get_r50_b16_config()
+        self.config.img_size = 224
         self.config.in_channels = self.ch_i  # Assuming self.ch_i is 1 for grayscale
         self.config.num_classes = self.ch_o  # Number of output channels
 
