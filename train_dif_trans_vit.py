@@ -2,7 +2,7 @@ from tqdm import tqdm
 import torch
 import argparse
 import data_dif as data
-from trainer_dif_trans import TrainerMultiple
+from trainer_dif_trans_vit import TrainerMultiple
 from utils import *
 from pathlib import Path
 import pickle
