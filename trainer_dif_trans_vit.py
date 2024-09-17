@@ -187,8 +187,6 @@ class TrainerMultiple(nn.Module):
 
         # Update the learning rate scheduler based on the current loss
         self.scheduler.step(loss)
-        for param_group in self.optimizer.param_groups:
-            print(f"Learning Rate: {param_group['lr']}")
 
         # Update fingerprint
         if self.fingerprint is None:
