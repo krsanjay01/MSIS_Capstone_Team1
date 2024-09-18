@@ -180,8 +180,6 @@ class Embeddings(nn.Module):
         cls_tokens = self.cls_token.expand(B, -1, -1)  # Shape: (B, 1, hidden_size)
         x = torch.cat((cls_tokens, x), dim=1)  # Shape: (B, N_patches + 1, hidden_size)
 
-        print(f"x shape: {x.shape}")
-        print(f"position_embeddings shape: {self.position_embeddings.shape}")
         embeddings = x + self.position_embeddings
         embeddings = self.dropout(embeddings)
         return embeddings, features
