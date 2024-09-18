@@ -62,7 +62,7 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
                              train_mode=False)
 
     trainer = TrainerMultiple(hyper_pars, False)
-    trainer.load_stats(check_dir / f"chk_{model_ep}.pt")
+    trainer.load_stats(check_dir / f"chk_{model_ep}.pth")
 
     loss, acc = trainer.validate(test_set.get_loader())
 
