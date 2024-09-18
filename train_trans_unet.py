@@ -154,6 +154,7 @@ def train_model(args: argparse.Namespace) -> None:
         'Device': device,
         'Inp. Channel': 3,  # RGB images
         'Out. Channel': 2,  # Binary classification
+        'Crop Size': args.crop_size,
     }
 
     check_dir.mkdir(parents=True, exist_ok=True)
