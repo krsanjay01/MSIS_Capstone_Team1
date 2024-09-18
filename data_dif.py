@@ -130,7 +130,7 @@ class PRNUData(Dataset):
         self.train_mode = train_mode
 
         # Select the appropriate transforms based on mode (train or test)
-        #self.transforms = train_transforms if self.train_mode else test_transforms
+        self.transforms = train_transforms if self.train_mode else test_transforms
 
     def prep_inputs(self, demand_equal):
 
