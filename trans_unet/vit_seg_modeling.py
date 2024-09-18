@@ -373,14 +373,6 @@ class DecoderCup(nn.Module):
         self.blocks = nn.ModuleList(blocks)
 
     def forward(self, hidden_states, features=None):
-
-        if features is not None:
-            print(f"Number of features: {len(features)}")
-        else:
-            print("Features are None")
-
-        print(f"self.config.n_skip: {self.config.n_skip}")
-
         B, n_patch, hidden = hidden_states.size()  # reshape from (B, n_patch, hidden) to (B, h, w, hidden)
         h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))
         x = hidden_states.permute(0, 2, 1)
