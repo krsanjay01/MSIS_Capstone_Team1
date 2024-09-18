@@ -130,7 +130,7 @@ class PRNUData(Dataset):
         self.train_mode = train_mode
 
         # Select the appropriate transforms based on mode (train or test)
-        self.transforms = train_transforms if self.train_mode else test_transforms
+        #self.transforms = train_transforms if self.train_mode else test_transforms
 
     def prep_inputs(self, demand_equal):
 
@@ -170,8 +170,8 @@ class PRNUData(Dataset):
         image = np.array(image)
 
         # Apply data augmentation if in training mode
-        image = self.transforms(image)
+        #image = self.transforms(image)
 
-        #image = torch.tensor(image.transpose((2, 0, 1))).type(torch.float32).div(255)
+        image = torch.tensor(image.transpose((2, 0, 1))).type(torch.float32).div(255)
 
         return image, label
