@@ -52,7 +52,7 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
 
     # Load data using the function defined in the training script
     print(f'Loading test data from {images_dir.stem}...')
-    load_full_test_data(images_dir, args.batch,val_transforms)
+    test_loader = load_full_test_data(images_dir, args.batch,val_transforms)
 
     print(f'Loaded {len(test_loader.dataset)} images for testing.')
 
