@@ -34,7 +34,7 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
 
     model_ep = args.epoch
     images_dir = Path(args.image_dir)
-    check_dir = Path(args.checkpoint_dir)
+    check_dir = Path(args.fingerprint_dir)
 
     # Load hyperparameters
     with open(check_dir / "train_hypers.pt", 'rb') as pickle_file:
