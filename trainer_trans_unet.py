@@ -52,8 +52,8 @@ class TrainerMultiple(nn.Module):
         classifier_params = list(self.model.classification_head.parameters())
 
         self.optimizer = optim.AdamW([
-            {'params': encoder_params, 'lr': self.init_lr * 0.1},
-            {'params': classifier_params, 'lr': self.init_lr}
+            {'params': encoder_params, 'lr': self.init_lr * 0.2},
+            {'params': classifier_params, 'lr': self.init_lr * 0.1}
         ], weight_decay=1e-5)
 
         # Learning rate scheduler
