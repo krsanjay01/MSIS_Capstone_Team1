@@ -146,10 +146,6 @@ class Embeddings(nn.Module):
             n_patches = (img_size[0] // patch_size[0]) * (img_size[1] // patch_size[1])
             self.hybrid = False
 
-        print(f"Grid Size: {grid_size}")
-        print(f"Patch Size: {patch_size}")
-        print(f"Calculated n_patches: {n_patches}")
-
         if self.hybrid:
             self.hybrid_model = ResNetV2(block_units=config.resnet.num_layers, width_factor=config.resnet.width_factor)
             in_channels = self.hybrid_model.width * 16
@@ -179,10 +175,6 @@ class Embeddings(nn.Module):
         cls_tokens = self.cls_token.expand(B, -1, -1)  # Shape: (B, 1, hidden_size)
         x = torch.cat((cls_tokens, x), dim=1)  # Shape: (B, N_patches + 1, hidden_size)
 
-        print(f"Embedding shape after patch embeddings: {x.shape}")
-        print(f"Position Embeddings Shape: {self.position_embeddings.shape}")
-
-        print(f"Number of patches: {n_patches}, CLS Token Shape: {cls_tokens.shape}")
         embeddings = x + self.position_embeddings[:, :n_patches + 1, :]  # Match positional embeddings size
 
         embeddings = self.dropout(embeddings)
@@ -454,8 +446,6 @@ class VisionTransformer(nn.Module):
             if posemb.size() == posemb_new.size():
                 self.transformer.embeddings.position_embeddings.copy_(posemb)
             else:
-                print(f"Pretrained positional embeddings shape: {posemb.shape}")
-                print(f"New model positional embeddings shape: {posemb_new.shape}")
                 # Resize positional embeddings if their sizes don't match
                 logger.info(f"Resizing position embeddings from {posemb.size()} to {posemb_new.size()}")
                 ntok_new = posemb_new.size(1)
@@ -467,10 +457,6 @@ class VisionTransformer(nn.Module):
                 else:
                     posemb_grid = posemb
                     cls_posemb = None
-
-                # Check the shape of the embeddings
-                print(f"Pretrained positional embeddings shape: {posemb.shape}")
-                print(f"New model positional embeddings shape: {posemb_new.shape}")
 
                 ntok_new_without_cls = ntok_new - 1 if self.config.use_cls_token else ntok_new
                 ntok_old_without_cls = posemb_grid.shape[1]
