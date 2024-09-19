@@ -104,6 +104,17 @@ def load_data(image_dir):
     return image_paths, labels
 
 
+def load_full_test_data(image_dir, batch_size, transforms):
+    """
+    Function to load 100% of the test data given the test image directory.
+    """
+    image_paths, labels = load_data(image_dir)
+
+    test_dataset = CustomDataset(image_paths, labels, transform=transforms)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+
+    return test_loader
+
 def create_dataloaders(image_paths, labels, batch_size, train_transforms, val_transforms, train_size,
                        validation_split=0.2):
     # Limit the number of training samples per class

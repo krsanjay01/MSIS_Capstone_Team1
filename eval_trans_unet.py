@@ -6,7 +6,7 @@ from trainer_trans_unet import TrainerMultiple
 from utils import *
 import pickle
 from pathlib import Path
-from train_trans_unet import CustomDataset, load_data, create_dataloaders, normalize, val_transforms
+from train_trans_unet import CustomDataset, load_data, create_dataloaders, normalize, val_transforms, load_full_test_data
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -52,12 +52,8 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
 
     # Load data using the function defined in the training script
     print(f'Loading test data from {images_dir.stem}...')
-    image_paths, labels = load_data(images_dir)  # Reusing load_data from training script
+    load_full_test_data(images_dir, args.batch,val_transforms)
 
-    # Prepare validation dataloader
-    _, test_loader = create_dataloaders(
-        image_paths, labels, args.batch, None, val_transforms, len(image_paths), validation_split=1.0
-    )
     print(f'Loaded {len(test_loader.dataset)} images for testing.')
 
     # Initialize the trainer
