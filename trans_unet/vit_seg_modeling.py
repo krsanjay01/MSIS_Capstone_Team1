@@ -131,10 +131,11 @@ class Embeddings(nn.Module):
         img_size = _pair(img_size)
 
         if config.patches.get("grid") is not None:   # ResNet
-            grid_size = config.patches["grid"]
+            grid_size = config.patches["grid"]  # This gives the number of patches along each dimension
             patch_size = (img_size[0] // grid_size[0], img_size[1] // grid_size[1])
-            patch_size_real = (patch_size[0] * 16, patch_size[1] * 16)
-            n_patches = (img_size[0] // patch_size_real[0]) * (img_size[1] // patch_size_real[1])
+
+            # Calculate the number of patches directly without using `patch_size_real`
+            n_patches = grid_size[0] * grid_size[1]
             self.hybrid = True
 
         else:
