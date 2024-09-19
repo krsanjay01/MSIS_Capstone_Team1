@@ -51,7 +51,7 @@ class TrainerMultiple(nn.Module):
         encoder_params = list(self.model.transformer.parameters())
         classifier_params = list(self.model.classification_head.parameters())
 
-        self.optimizer = optim.RMSprop([
+        self.optimizer = optim.AdamW([
             {'params': encoder_params, 'lr': self.init_lr * 0.1},
             {'params': classifier_params, 'lr': self.init_lr}
         ], weight_decay=1e-5)

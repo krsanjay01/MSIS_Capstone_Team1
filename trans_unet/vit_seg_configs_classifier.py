@@ -36,7 +36,7 @@ def get_testing():
     config.transformer.mlp_dim = 1
     config.transformer.num_heads = 1
     config.transformer.num_layers = 1
-    config.transformer.attention_dropout_rate = 0.0
+    config.transformer.attention_dropout_rate = 0.1
     config.transformer.dropout_rate = 0.1
     config.classifier = 'token'
     config.representation_size = None
