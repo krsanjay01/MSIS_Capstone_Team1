@@ -135,7 +135,7 @@ class Embeddings(nn.Module):
             patch_size = (img_size[0] // grid_size[0], img_size[1] // grid_size[1])
 
             # Calculate the number of patches directly without using `patch_size_real`
-            n_patches = grid_size[0] * grid_size[1]
+            n_patches = patch_size[0] * patch_size[1]
             self.hybrid = True
 
         else:
@@ -145,22 +145,13 @@ class Embeddings(nn.Module):
 
         if self.hybrid:
             self.hybrid_model = ResNetV2(block_units=config.resnet.num_layers, width_factor=config.resnet.width_factor)
-            # Modify the first convolutional layer of ResNet to accept 32 channels
-            self.hybrid_model.root.conv = nn.Conv2d(
-                in_channels=3,  # Change from 3 to 32
-                out_channels=self.hybrid_model.root.conv.out_channels,
-                kernel_size=self.hybrid_model.root.conv.kernel_size,
-                stride=self.hybrid_model.root.conv.stride,
-                padding=self.hybrid_model.root.conv.padding,
-                bias=False
-            )
             in_channels = self.hybrid_model.width * 16
 
         self.patch_embeddings = Conv2d(in_channels=in_channels,
                                        out_channels=config.hidden_size,
                                        kernel_size=patch_size,
                                        stride=patch_size)
-        self.position_embeddings = nn.Parameter(torch.zeros(1, 256, config.hidden_size))
+        self.position_embeddings = nn.Parameter(torch.zeros(1, n_patches, config.hidden_size))
 
         self.dropout = Dropout(config.transformer["dropout_rate"])
 

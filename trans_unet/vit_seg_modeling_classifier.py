@@ -8,6 +8,7 @@ import logging
 import math
 
 from os.path import join as pjoin
+from unittest.mock import patch
 
 import torch
 from torch import nn
@@ -137,7 +138,7 @@ class Embeddings(nn.Module):
             patch_size = (img_size[0] // grid_size[0], img_size[1] // grid_size[1])
 
             # Calculate the number of patches directly without using `patch_size_real`
-            n_patches = grid_size[0] * grid_size[1]
+            n_patches = patch_size[0] * patch_size[1]
             self.hybrid = True
 
         else:
@@ -145,17 +146,12 @@ class Embeddings(nn.Module):
             n_patches = (img_size[0] // patch_size[0]) * (img_size[1] // patch_size[1])
             self.hybrid = False
 
+        print(f"Grid Size: {grid_size}")
+        print(f"Patch Size: {patch_size}")
+        print(f"Calculated n_patches: {n_patches}")
+
         if self.hybrid:
             self.hybrid_model = ResNetV2(block_units=config.resnet.num_layers, width_factor=config.resnet.width_factor)
-            # Modify the first convolutional layer of ResNet to accept 32 channels
-            self.hybrid_model.root.conv = nn.Conv2d(
-                in_channels=3,  # Change from 3 to 32
-                out_channels=self.hybrid_model.root.conv.out_channels,
-                kernel_size=self.hybrid_model.root.conv.kernel_size,
-                stride=self.hybrid_model.root.conv.stride,
-                padding=self.hybrid_model.root.conv.padding,
-                bias=False
-            )
             in_channels = self.hybrid_model.width * 16
 
         self.patch_embeddings = Conv2d(in_channels=in_channels,
@@ -174,6 +170,8 @@ class Embeddings(nn.Module):
         else:
             features = []  # If not using hybrid model, initialize features as an empty list
         x = self.patch_embeddings(x)  # (B, hidden, n_patches^(1/2), n_patches^(1/2))
+
+        n_patches = (x.size(2) * x.size(3))  # Calculate number of patches
         x = x.flatten(2)
         x = x.transpose(-1, -2)  # (B, n_patches, hidden)
 
@@ -181,7 +179,12 @@ class Embeddings(nn.Module):
         cls_tokens = self.cls_token.expand(B, -1, -1)  # Shape: (B, 1, hidden_size)
         x = torch.cat((cls_tokens, x), dim=1)  # Shape: (B, N_patches + 1, hidden_size)
 
-        embeddings = x + self.position_embeddings
+        print(f"Embedding shape after patch embeddings: {x.shape}")
+        print(f"Position Embeddings Shape: {self.position_embeddings.shape}")
+
+        print(f"Number of patches: {n_patches}, CLS Token Shape: {cls_tokens.shape}")
+        embeddings = x + self.position_embeddings[:, :n_patches + 1, :]  # Match positional embeddings size
+
         embeddings = self.dropout(embeddings)
         return embeddings, features
 
@@ -451,6 +454,8 @@ class VisionTransformer(nn.Module):
             if posemb.size() == posemb_new.size():
                 self.transformer.embeddings.position_embeddings.copy_(posemb)
             else:
+                print(f"Pretrained positional embeddings shape: {posemb.shape}")
+                print(f"New model positional embeddings shape: {posemb_new.shape}")
                 # Resize positional embeddings if their sizes don't match
                 logger.info(f"Resizing position embeddings from {posemb.size()} to {posemb_new.size()}")
                 ntok_new = posemb_new.size(1)
@@ -472,8 +477,10 @@ class VisionTransformer(nn.Module):
 
                 # Resize the grid if necessary
                 gs_old = int(np.sqrt(ntok_old_without_cls))  # Old grid size
-                gs_new_h = int(np.floor(np.sqrt(ntok_new_without_cls)))  # New grid height
-                gs_new_w = int(np.ceil(ntok_new_without_cls / gs_new_h))  # New grid width
+                gs_new_h = int(np.sqrt(ntok_new - 1))  # Adjusted to match the requirement
+
+                # This is where you adjust the aspect ratio if necessary
+                gs_new_w = ntok_new // gs_new_h
 
                 print(f'load_pretrained: grid-size from {gs_old}x{gs_old} to {gs_new_h}x{gs_new_w}')
                 posemb_grid = posemb_grid.reshape(gs_old, gs_old, -1)  # [gs_old, gs_old, dim]

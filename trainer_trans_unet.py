@@ -32,7 +32,7 @@ class TrainerMultiple(nn.Module):
 
         # Model configuration
         self.config = get_r50_b16_config()
-        self.config.img_size = 224
+        self.config.img_size = (224, 224)
         self.config.in_channels = self.ch_i
         self.config.n_classes = 2  # Binary classification
         self.config.num_classes = self.config.n_classes
