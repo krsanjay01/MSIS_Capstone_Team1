@@ -9,8 +9,8 @@ def get_b16_config():
     config.transformer.mlp_dim = 3072
     config.transformer.num_heads = 12
     config.transformer.num_layers = 12
-    config.transformer.attention_dropout_rate = 0.2
-    config.transformer.dropout_rate = 0.2
+    config.transformer.attention_dropout_rate = 0.1
+    config.transformer.dropout_rate = 0.1
 
     config.classifier = 'seg'
     config.representation_size = None
@@ -45,9 +45,9 @@ def get_testing():
 def get_r50_b16_config():
     """Returns the Resnet50 + ViT-B/16 configuration."""
     config = get_b16_config()
-    config.patches.grid = (16,16)
+    config.patches.grid = (14,14)
     config.resnet = ml_collections.ConfigDict()
-    config.resnet.num_layers = (2,3,4)
+    config.resnet.num_layers = (3,4,9)
     config.resnet.width_factor = 1
 
     config.classifier = 'seg'
