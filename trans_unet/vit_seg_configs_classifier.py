@@ -8,7 +8,7 @@ def get_b16_config():
     config.transformer = ml_collections.ConfigDict()
     config.transformer.mlp_dim = 3072
     config.transformer.num_heads = 12
-    config.transformer.num_layers = 12
+    config.transformer.num_layers = 16
     config.transformer.attention_dropout_rate = 0.0
     config.transformer.dropout_rate = 0.1
 
