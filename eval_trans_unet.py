@@ -6,6 +6,7 @@ from trainer_trans_unet import TrainerMultiple
 from utils import *
 import pickle
 from pathlib import Path
+from train_trans_unet import CustomDataset, load_data, create_dataloaders, normalize, val_transforms
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -33,14 +34,13 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
 
     model_ep = args.epoch
     images_dir = Path(args.image_dir)
-    check_dir = Path(args.fingerprint_dir)
+    check_dir = Path(args.checkpoint_dir)
 
-    check_existence(check_dir, False)
-    check_existence(images_dir, False)
-
+    # Load hyperparameters
     with open(check_dir / "train_hypers.pt", 'rb') as pickle_file:
         hyper_pars = pickle.load(pickle_file)
 
+    # Set device
     device_name = "cpu"
     if torch.cuda.is_available():
         device_name = "cuda"
@@ -50,21 +50,27 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
     hyper_pars['Device'] = torch.device(device_name)
     hyper_pars['Batch Size'] = args.batch
 
-    print(f'Working on {images_dir.stem}')
+    # Load data using the function defined in the training script
+    print(f'Loading test data from {images_dir.stem}...')
+    image_paths, labels = load_data(images_dir)  # Reusing load_data from training script
 
-    real_path_list = [list((images_dir / "0_real").glob('*.' + x)) for x in ['jpg', 'jpeg', 'png']]
-    real_path_list = [ele for ele in real_path_list if ele != []][0]
+    # Prepare validation dataloader
+    _, test_loader = create_dataloaders(
+        image_paths, labels, args.batch, None, val_transforms, len(image_paths), validation_split=1.0
+    )
+    print(f'Loaded {len(test_loader.dataset)} images for testing.')
 
-    fake_path_list = [list((images_dir / "1_fake").glob('*.' + x)) for x in ['jpg', 'jpeg', 'png']]
-    fake_path_list = [ele for ele in fake_path_list if ele != []][0]
+    # Initialize the trainer
+    trainer = TrainerMultiple(hyper_pars, train=False)
 
-    test_set = data.PRNUData(real_path_list, fake_path_list, hyper_pars, demand_equal=False,
-                             train_mode=False)
+    # Load model weights
+    checkpoint_path = check_dir / f"chk_{model_ep}.pth"
+    trainer.model.load_state_dict(torch.load(checkpoint_path, map_location=hyper_pars['Device']))
+    print(f"Loaded model checkpoint from {checkpoint_path}")
 
-    trainer = TrainerMultiple(hyper_pars, False)
-    #trainer.load_stats(check_dir / f"chk_{model_ep}.pth")
-
-    loss, acc = trainer.validate(test_set.get_loader())
+    # Validate the model
+    print('Validating...')
+    loss, acc = trainer.validate(test_loader)
 
     return loss, acc
 
