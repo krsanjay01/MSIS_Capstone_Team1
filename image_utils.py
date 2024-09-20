@@ -85,15 +85,15 @@ def compress_jpeg(input_dir, output_dir, compression_level):
             img = Image.open(img_path)
 
             # If the image has an alpha channel (RGBA), convert it to RGB
-            if img.mode == 'RGBA':
-                img = img.convert('RGB')
+            if img.mode == 'RGB':
 
-            # Get the filename without extension and add .jpg extension
-            base_name = os.path.splitext(filename)[0]
-            compressed_path = os.path.join(output_dir, f"{base_name}.jpg")
+                # Get the filename without extension and add .jpg extension
+                base_name = os.path.splitext(filename)[0]
+                compressed_path = os.path.join(output_dir, f"{base_name}.jpg")
 
-            # Compress the image using JPEG with quality level of 75
-            img.save(compressed_path, format="JPEG", quality=compression_level)
+                print('Writing image: ', compressed_path, '...')
+                # Compress the image using JPEG with quality level of 75
+                img.save(compressed_path, format="JPEG", quality=compression_level)
 
     print('All images have been compressed to JPEG 75.')
 
