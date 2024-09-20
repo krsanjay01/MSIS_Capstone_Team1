@@ -11,8 +11,8 @@
             "program": "train_dif.py",
             "console": "integratedTerminal",
             "args": [
-                "data/dalle_2",
-                "checkpoint/dalle_2"
+                "data/sd_art_jpeg75",
+                "checkpoint/sd_art_jpeg75"
             ]
         },
         {

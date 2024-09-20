@@ -40,8 +40,16 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
 
     with open(check_dir / "train_hypers.pt", 'rb') as pickle_file:
         hyper_pars = pickle.load(pickle_file)
+        
+    device_name = "cpu"
+    if torch.cuda.is_available():
+        device_name = "cuda"
+    elif torch.backends.mps.is_available():
+        device_name = "mps"
 
-    hyper_pars['Device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(device_name)
+
+    hyper_pars['Device'] = device
     hyper_pars['Batch Size'] = args.batch
 
     print(f'Working on {images_dir.stem}')
