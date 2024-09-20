@@ -35,7 +35,7 @@ class UnetWithTransformer(nn.Module):
         self.skip = []
 
         # Use the Transformer as encoder
-        self.transformer = Transformer(config,img_size=224, vis=vis).to(self.device)  # Move to device
+        self.transformer = Transformer(config,img_size=224, vis=vis, in_channels=3).to(self.device)  # Move to device
 
         self.encoder = self.transformer.to(self.device)  # Ensure the encoder is on the correct device
         # Freeze the first N layers of the transformer encoder
@@ -178,65 +178,126 @@ class UnetWithTransformer(nn.Module):
         self.add_module(f'mid', self.layers[0])
         self.add_module(f'final', self.layers[1])
 
+    # In your UnetWithTransformer class
+
     def forward(self, img):
-        # Ensure img is on the correct device and dtype
         img = img.to(self.device)
         h_skip = []
 
-        # Move encoder Conv_Block layers to MPS device
+        # Encoder
         for idx, enc_layer in enumerate(self.enc):
-            enc_layer = enc_layer.to(self.device)  # Move layer to MPS
-            _, img = enc_layer(img)  # We only want to pass `img`, the second element
-            h_skip.append(img)  # Save the output of each encoder layer for skip connections
+            _, img = enc_layer(img)
+            h_skip.append(img)
 
-        # **Apply the Conv2d layer to reduce the number of channels**
-        img = self.reduce_channels(img)  # Reduce channels from 512 to 3
+        # # Instead of reducing channels and resizing, flatten feature maps
+        print('Image Size: ', img.size(), ' after encoder.')
+        batch_size, channels, height, width = img.size()
+        #img = img.view(batch_size, channels, -1)  # Flatten spatial dimensions
+        #img = img.permute(0, 2, 1)  # Shape: (batch_size, sequence_length, channels)
+
+        # Reduce channels
+        img = self.reduce_channels(img)
 
         # **Ensure the spatial resolution is aligned with the Vision Transformer input**
         img_size = 256  # Adjust this size according to your transformer patch size
         img = F.interpolate(img, size=(img_size, img_size), mode='bilinear', align_corners=True)
 
-        # Transformer encoder step
-        x, attn_weights, features = self.encoder(img.to(self.device))
+        # Feed into Transformer (adjust Transformer to accept this input)
+        x, attn_weights, features = self.transformer(img)
 
-        # Reshape transformer output
+        print('Image Size: ', x.size(), ' after transformer.')
         batch_size, num_patches, hidden_size = x.shape
         height = width = int(num_patches ** 0.5)
-        x = x.permute(0, 2, 1).contiguous().view(batch_size, hidden_size, height, width).to(self.device)
+
+        # Reshape Transformer output back to spatial dimensions
+        x = x.permute(0, 2, 1).contiguous().view(batch_size, -1, height, width)
 
         # Apply throttling layer to convert transformer output to fit UNet decoder input
         self.throttling_layer = self.throttling_layer.to(self.device)  # Ensure throttling layer is on MPS
         x = self.throttling_layer(x)
 
-        # Decoder loop with concatenation and skip connections
+        # Decoder with skip connections
         for l_idx in range(len(self.dec)):
-            x = x.to(self.device)
             if self.concat[-(l_idx + 1)] == 2:
-                # Concatenate skip connection from encoder
                 skip_tensor = h_skip[-(l_idx + 1)]
 
                 # Interpolate skip_tensor if dimensions don't match
                 if skip_tensor.size(2) != x.size(2) or skip_tensor.size(3) != x.size(3):
-                    skip_tensor = F.interpolate(skip_tensor, size=(x.size(2), x.size(3)), mode='bilinear',
-                                                align_corners=True)
-
-                # Concatenate along the channel dimension
+                    skip_tensor = F.interpolate(skip_tensor, size=(x.size(2), x.size(3)), mode='bilinear', align_corners=True)
                 x = torch.cat([x, skip_tensor], dim=1)
 
                 # Adjust the number of channels to match the expected input size of the next decoder layer
                 if x.size(1) != self.dec[l_idx].c1.conv[0].in_channels:  # Check if the channels mismatch
                     channel_adjustment_layer = nn.Conv2d(in_channels=x.size(1),
-                                                         out_channels=self.dec[l_idx].c1.conv[0].in_channels,
-                                                         kernel_size=1).to(self.device)
+                                                            out_channels=self.dec[l_idx].c1.conv[0].in_channels,
+                                                            kernel_size=1).to(self.device)
                     x = channel_adjustment_layer(x)
 
-            # Apply decoder layer
-            _, x = self.dec[l_idx](x.to(self.device))
+            _, x = self.dec[l_idx](x)
 
-        # Final projection to output channels
+        # Final projection
         h = self.final(x)
-
         return h
+
+    # def forward(self, img):
+    #     # Ensure img is on the correct device and dtype
+    #     img = img.to(self.device)
+    #     h_skip = []
+    #
+    #     # Move encoder Conv_Block layers to MPS device
+    #     for idx, enc_layer in enumerate(self.enc):
+    #         enc_layer = enc_layer.to(self.device)  # Move layer to MPS
+    #         _, img = enc_layer(img)  # We only want to pass `img`, the second element
+    #         h_skip.append(img)  # Save the output of each encoder layer for skip connections
+    #
+    #     # **Apply the Conv2d layer to reduce the number of channels**
+    #     img = self.reduce_channels(img)  # Reduce channels from 512 to 3
+    #
+    #     # **Ensure the spatial resolution is aligned with the Vision Transformer input**
+    #     img_size = 256  # Adjust this size according to your transformer patch size
+    #     img = F.interpolate(img, size=(img_size, img_size), mode='bilinear', align_corners=True)
+    #
+    #     # Transformer encoder step
+    #     x, attn_weights, features = self.encoder(img.to(self.device))
+    #
+    #     # Reshape transformer output
+    #     batch_size, num_patches, hidden_size = x.shape
+    #     height = width = int(num_patches ** 0.5)
+    #     x = x.permute(0, 2, 1).contiguous().view(batch_size, hidden_size, height, width).to(self.device)
+    #
+    #     # Apply throttling layer to convert transformer output to fit UNet decoder input
+    #     self.throttling_layer = self.throttling_layer.to(self.device)  # Ensure throttling layer is on MPS
+    #     x = self.throttling_layer(x)
+    #
+    #     # Decoder loop with concatenation and skip connections
+    #     for l_idx in range(len(self.dec)):
+    #         x = x.to(self.device)
+    #         if self.concat[-(l_idx + 1)] == 2:
+    #             # Concatenate skip connection from encoder
+    #             skip_tensor = h_skip[-(l_idx + 1)]
+    #
+    #             # Interpolate skip_tensor if dimensions don't match
+    #             if skip_tensor.size(2) != x.size(2) or skip_tensor.size(3) != x.size(3):
+    #                 skip_tensor = F.interpolate(skip_tensor, size=(x.size(2), x.size(3)), mode='bilinear',
+    #                                             align_corners=True)
+    #
+    #             # Concatenate along the channel dimension
+    #             x = torch.cat([x, skip_tensor], dim=1)
+    #
+    #             # Adjust the number of channels to match the expected input size of the next decoder layer
+    #             if x.size(1) != self.dec[l_idx].c1.conv[0].in_channels:  # Check if the channels mismatch
+    #                 channel_adjustment_layer = nn.Conv2d(in_channels=x.size(1),
+    #                                                      out_channels=self.dec[l_idx].c1.conv[0].in_channels,
+    #                                                      kernel_size=1).to(self.device)
+    #                 x = channel_adjustment_layer(x)
+    #
+    #         # Apply decoder layer
+    #         _, x = self.dec[l_idx](x.to(self.device))
+    #
+    #     # Final projection to output channels
+    #     h = self.final(x)
+    #
+    #     return h
 
 
 # ----------------Test---------------------------
