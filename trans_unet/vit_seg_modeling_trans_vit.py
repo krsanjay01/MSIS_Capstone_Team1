@@ -403,8 +403,7 @@ class VisionTransformer(nn.Module):
             x = x.repeat(1,3,1,1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
         x = self.decoder(x, features)
-        logits = self.segmentation_head(x)
-        return logits
+        return x
 
     def get_transformer(self):
         return self.transformer
