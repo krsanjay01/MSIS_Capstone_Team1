@@ -409,6 +409,12 @@ class VisionTransformer(nn.Module):
             x = x.repeat(1,3,1,1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
         #x = self.decoder(x, features)
+
+        # Reshape the output to match final_conv input expectations
+        B, n_patch, hidden = x.size()  # (B, n_patch, hidden)
+        h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))  # Calculate height and width
+        x = x.permute(0, 2, 1).contiguous().view(B, hidden, h, w)  # Reshape to (B, hidden, h, w)
+
         x = self.final_conv(x)
         return x
 
