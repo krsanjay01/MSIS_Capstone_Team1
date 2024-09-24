@@ -12,7 +12,7 @@ from utils import calc_even_size, produce_spectrum
 from torch.optim import lr_scheduler
 
 import torch.nn.functional as F
-from trans_unet.vit_seg_modeling import VisionTransformer
+from trans_unet.vit_seg_modeling_trans_vit import VisionTransformer
 from trans_unet.vit_seg_configs import get_b16_config
 from trans_unet.vit_seg_configs import get_r50_b16_config
 
