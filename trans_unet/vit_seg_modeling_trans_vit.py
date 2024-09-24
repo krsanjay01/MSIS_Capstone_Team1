@@ -365,7 +365,7 @@ class DecoderCup(nn.Module):
         self.blocks = nn.ModuleList(blocks)
         # Final convolution layer with tanh activation
         self.final_conv = nn.Sequential(
-            nn.Conv2d(out_channels[-1], config.out_channels, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0),
             nn.Tanh()
         )
 
