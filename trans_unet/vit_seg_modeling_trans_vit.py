@@ -394,7 +394,13 @@ class VisionTransformer(nn.Module):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        self.decoder = DecoderCup(config)
+        #self.decoder = DecoderCup(config)
+
+        # Final convolution layer with tanh activation
+        self.final_conv = nn.Sequential(
+            nn.Conv2d(config.hidden_size, 1, kernel_size=1, stride=1, padding=0),
+            nn.Tanh()
+        )
 
         self.config = config
 
@@ -402,7 +408,8 @@ class VisionTransformer(nn.Module):
         if x.size()[1] == 1:
             x = x.repeat(1,3,1,1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
-        x = self.decoder(x, features)
+        #x = self.decoder(x, features)
+        x = self.final_conv(x)
         return x
 
     def get_transformer(self):
