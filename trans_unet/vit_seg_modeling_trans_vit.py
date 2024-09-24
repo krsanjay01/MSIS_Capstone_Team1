@@ -469,6 +469,7 @@ class VisionTransformer(nn.Module):
                 for bname, block in self.transformer.embeddings.hybrid_model.body.named_children():
                     for uname, unit in block.named_children():
                         unit.load_from(res_weight, n_block=bname, n_unit=uname)
+            print("Successfully loaded pre-trained model")
 
 CONFIGS = {
     'ViT-B_16': configs.get_b16_config(),
