@@ -92,7 +92,7 @@ class TrainerMultiple(nn.Module):
         # Initialize VisionTransformer
         self.unet = VisionTransformer(self.config, img_size=self.config.img_size, num_classes=self.config.num_classes,
                                       zero_head=True).to(self.device)
-        self.unet.load_from(weights=np.load(self.config.pretrained_path))
+        #self.unet.load_from(weights=np.load(self.config.pretrained_path))
         # Optimizer with different learning rates for different parts of the model
         encoder_params = []
         decoder_params = []
@@ -174,7 +174,7 @@ class TrainerMultiple(nn.Module):
         # Resize noise image
         #dmy = F.interpolate(dmy, size=(self.config.img_size, self.config.img_size), mode='bilinear', align_corners=False)
         #Reduce channels of dmy
-        dmy = self.channel_reduction(dmy)
+        #dmy = self.channel_reduction(dmy)
 
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
 
