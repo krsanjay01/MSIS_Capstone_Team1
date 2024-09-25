@@ -85,7 +85,6 @@ class TrainerMultiple(nn.Module):
         # Optimizer setup
         self.optimizer = optim.AdamW([
             {'params': encoder_params, 'lr': 1e-4},  # Lower learning rate for UNet encoder
-            {'params': self.unet.transformer.parameters(), 'lr': 1e-4},  # Higher learning rate for Transformer
             {'params': decoder_params, 'lr': 1e-4},  # Lower learning rate for UNet decoder
         ], weight_decay=1e-5)
 
