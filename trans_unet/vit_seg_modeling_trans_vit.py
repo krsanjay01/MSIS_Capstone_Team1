@@ -19,7 +19,7 @@ from torch.nn import CrossEntropyLoss, Dropout, Softmax, Linear, Conv2d, LayerNo
 from torch.nn.modules.utils import _pair
 from scipy import ndimage
 from trans_unet import vit_seg_configs as configs
-from trans_unet.vit_seg_modeling_resnet_skip import ResNetV2
+from trans_unet.vit_seg_modeling_resnet_skip_trans_vit import ResNetV2
 
 
 logger = logging.getLogger(__name__)
@@ -394,7 +394,7 @@ class VisionTransformer(nn.Module):
         self.zero_head = zero_head
         self.classifier = config.classifier
         self.transformer = Transformer(config, img_size, vis)
-        #self.decoder = DecoderCup(config)
+        self.decoder = DecoderCup(config)
 
         # Final convolution layer with tanh activation
         self.final_conv = nn.Sequential(
@@ -408,12 +408,7 @@ class VisionTransformer(nn.Module):
         if x.size()[1] == 1:
             x = x.repeat(1,3,1,1)
         x, attn_weights, features = self.transformer(x)  # (B, n_patch, hidden)
-        #x = self.decoder(x, features)
-
-        # Reshape the output to match final_conv input expectations
-        B, n_patch, hidden = x.size()  # (B, n_patch, hidden)
-        h, w = int(np.sqrt(n_patch)), int(np.sqrt(n_patch))  # Calculate height and width
-        x = x.permute(0, 2, 1).contiguous().view(B, hidden, h, w)  # Reshape to (B, hidden, h, w)
+        x = self.decoder(x, features)
 
         x = self.final_conv(x)
         return x
