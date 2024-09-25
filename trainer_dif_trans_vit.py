@@ -175,7 +175,7 @@ class TrainerMultiple(nn.Module):
         #dmy = F.interpolate(dmy, size=(self.config.img_size, self.config.img_size), mode='bilinear', align_corners=False)
         #Reduce channels of dmy
         #dmy = self.channel_reduction(dmy)
-
+        print(f'Shape of dmy {dmy.shape}')
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
 
         corr = self.corr_fun(out, residuals)
