@@ -118,7 +118,7 @@ class ResNetV2(nn.Module):
         self.width = width
 
         self.root = nn.Sequential(OrderedDict([
-            ('conv', StdConv2d(3, width, kernel_size=7, stride=2, bias=False, padding=3)),
+            ('conv', StdConv2d(16, width, kernel_size=7, stride=2, bias=False, padding=3)),
             ('gn', nn.GroupNorm(32, width, eps=1e-6)),
             ('relu', nn.ReLU(inplace=True)),
             # ('pool', nn.MaxPool2d(kernel_size=3, stride=2, padding=0))
