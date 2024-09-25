@@ -470,8 +470,6 @@ class VisionTransformer(nn.Module):
                     for uname, unit in block.named_children():
                         unit.load_from(res_weight, n_block=bname, n_unit=uname)
             print("Successfully loaded pre-trained model")
-            for name, param in self.named_parameters():
-                print(f"{name}: {param.data.norm()}")  # This will print the norm of each parameter tensor
 
 CONFIGS = {
     'ViT-B_16': configs.get_b16_config(),
