@@ -17,13 +17,23 @@ class TransformerBlock(nn.Module):
     def forward(self, x):
         # Assuming input shape is (batch_size, channels, height, width)
         b, c, h, w = x.size()
+
+        # Flatten the spatial dimensions and permute for transformer
         x = x.view(b, c, h * w).permute(2, 0, 1)  # Reshape to (sequence_length, batch_size, embedding_dim)
         x = self.positional_encoding(x)
+        x = self.transformer(x)
 
-        # Using checkpoint to reduce memory usage
-        x = checkpoint.checkpoint(self.transformer, x)
+        # Compute the expected size
+        seq_len, batch_size, embedding_dim = x.size()
+        expected_shape = (b, c, h, w)
 
-        x = x.permute(1, 2, 0).view(b, c, h, w)  # Reshape back to (batch_size, channels, height, width)
+        # Check if the dimensions are consistent
+        if seq_len != h * w or embedding_dim != c:
+            raise RuntimeError(f"Shape mismatch: cannot reshape to {expected_shape} from {x.shape}")
+
+        # Reshape back to original image-like dimensions
+        x = x.permute(1, 2, 0).contiguous().view(b, c, h, w)  # Reshape back to (batch_size, channels, height, width)
+
         return x
 
 
