@@ -176,6 +176,7 @@ class TrainerMultiple(nn.Module):
         # Reduce channels of dmy
         #dmy = self.channel_reduction(dmy)
 
+        print('shape of dmy = ' + dmy.shape)
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
 
         corr = self.corr_fun(out, residuals)
