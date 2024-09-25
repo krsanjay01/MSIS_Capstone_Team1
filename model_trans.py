@@ -4,7 +4,8 @@ import math
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, d_model, nhead, num_layers, dim_feedforward=1024, dropout=0.1):
+    def __init__(self, d_model, nhead, num_layers, dim_feedforward=512, dropout=0.1):
+        print('dmodel:', d_model)
         super(TransformerBlock, self).__init__()
         encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward, dropout=dropout)
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
