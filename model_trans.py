@@ -41,7 +41,7 @@ class PositionalEncoding(nn.Module):
 class UnetWithTransformer(nn.Module):
     def __init__(self, device, inp_ch=1, out_ch=1,
                  arch=16, depth=3, activ='leak', concat=None,
-                 trans_nhead=4, trans_dim=64, trans_layers=4):
+                 trans_nhead=4, trans_dim=32, trans_layers=4):
         super(UnetWithTransformer, self).__init__()
 
         self.activ = activ
