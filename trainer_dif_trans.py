@@ -68,7 +68,7 @@ class TrainerMultiple(nn.Module):
 
         self.denoiser = load_denoiser(self.device)
         self.unet = model_trans.UnetWithTransformer(self.device, self.ch_i, self.ch_o, self.arch,
-                               activ='leak', depth=self.depth, concat=self.concat, train=train).to(self.device)
+                               activ='leak', depth=self.depth, concat=self.concat).to(self.device)
         #self.optimizer = optim.AdamW(self.unet.parameters(), lr=1e-5, weight_decay=1e-5)
 
         # Optimizer with different learning rates for different parts of the model
