@@ -7,7 +7,7 @@ class TransformerBlock(nn.Module):
     def __init__(self, d_model, nhead, num_layers, dim_feedforward=512, dropout=0.1):
         print('dmodel:', d_model)
         super(TransformerBlock, self).__init__()
-        encoder_layer = nn.TransformerEncoderLayer(d_model=64, nhead=nhead, dim_feedforward=dim_feedforward, dropout=dropout)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward, dropout=dropout)
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         self.positional_encoding = PositionalEncoding(d_model, dropout)
 
@@ -24,7 +24,6 @@ class TransformerBlock(nn.Module):
 
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
-        d_model=64
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
 
