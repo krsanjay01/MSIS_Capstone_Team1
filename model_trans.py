@@ -2,10 +2,10 @@ from basic_layer_trans import *
 from torch import nn
 
 
-class Unet(nn.Module):
+class UnetWithTransformer(nn.Module):
     def __init__(self, device, inp_ch=1, out_ch=1,
                  arch=16, depth=3, activ='leak', concat=None):
-        super(Unet, self).__init__()
+        super(UnetWithTransformer, self).__init__()
 
         self.activ = activ
         self.device = device
