@@ -45,7 +45,7 @@ def train_model(args: argparse.Namespace) -> None:
     print('Device = ' + str(device) + '.')
 
     hyper_pars = {'Epochs': args.e, 'Factor': args.f, 'Noise Type': 'uniform', "Train Size": args.tr,
-                  'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 64,
+                  'Noise STD': 0.03, 'Inp. Channel': 16, 'Batch Size': 32,
                   'LR': 5e-4, 'Device': device, 'Crop Size': (args.cs, args.cs), 'Margin': 0.01,
                   'Out. Channel': 3, 'Arch.': 32, 'Depth': 4, 'Alpha': args.a, 'Boost': args.b,
                   'Concat': [1, 1, 1, 1]}
