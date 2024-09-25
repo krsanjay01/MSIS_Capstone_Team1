@@ -172,9 +172,9 @@ class TrainerMultiple(nn.Module):
         dmy = self.prep_noise().to(self.device)
 
         # Resize noise image
-        dmy = F.interpolate(dmy, size=(self.config.img_size, self.config.img_size), mode='bilinear', align_corners=False)
+        #dmy = F.interpolate(dmy, size=(self.config.img_size, self.config.img_size), mode='bilinear', align_corners=False)
         # Reduce channels of dmy
-        dmy = self.channel_reduction(dmy)
+        #dmy = self.channel_reduction(dmy)
 
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
 
