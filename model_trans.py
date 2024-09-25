@@ -1,23 +1,28 @@
 from basic_layers import *
 from torch import nn
+import torch
 import math
+import torch.utils.checkpoint as checkpoint
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, d_model, nhead, num_layers, dim_feedforward=512, dropout=0.1):
-        print('dmodel:', d_model)
+    def __init__(self, d_model, nhead, num_layers, dim_feedforward=256, dropout=0.1):
         super(TransformerBlock, self).__init__()
-        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward, dropout=dropout)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward, dropout=dropout
+        )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         self.positional_encoding = PositionalEncoding(d_model, dropout)
 
     def forward(self, x):
         # Assuming input shape is (batch_size, channels, height, width)
-        print('x.size()', x.size())
         b, c, h, w = x.size()
         x = x.view(b, c, h * w).permute(2, 0, 1)  # Reshape to (sequence_length, batch_size, embedding_dim)
         x = self.positional_encoding(x)
-        x = self.transformer(x)
+
+        # Using checkpoint to reduce memory usage
+        x = checkpoint.checkpoint(self.transformer, x)
+
         x = x.permute(1, 2, 0).view(b, c, h, w)  # Reshape back to (batch_size, channels, height, width)
         return x
 
@@ -43,7 +48,7 @@ class PositionalEncoding(nn.Module):
 class UnetWithTransformer(nn.Module):
     def __init__(self, device, inp_ch=1, out_ch=1,
                  arch=16, depth=3, activ='leak', concat=None,
-                 trans_nhead=4, trans_dim=32, trans_layers=4):
+                 trans_nhead=2, trans_dim=32, trans_layers=2):
         super(UnetWithTransformer, self).__init__()
 
         self.activ = activ
@@ -70,7 +75,9 @@ class UnetWithTransformer(nn.Module):
         self.prep_params()
 
         # Transformer block
-        self.transformer = TransformerBlock(d_model=self.arch_n[-1], nhead=self.trans_nhead, num_layers=self.trans_layers)
+        # Reduced the `d_model` to trans_dim for lower memory consumption
+        self.transformer = TransformerBlock(d_model=self.trans_dim, nhead=self.trans_nhead,
+                                            num_layers=self.trans_layers)
 
     def check_concat(self, con):
         if con is None:
@@ -98,11 +105,11 @@ class UnetWithTransformer(nn.Module):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max'))
 
-        self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride')]
+        self.layers = [Conv_Block(self.arch_n[-1], self.trans_dim, activ=self.activ, pool='up_stride')]
 
         for idx in range(len(self.arch_n) - 2):
             self.dec.append(
-                Conv_Block(self.concat[- (idx + 1)] * self.arch_n[- (idx + 1)], self.arch_n[- (idx + 2)],
+                Conv_Block(self.concat[- (idx + 1)] * self.trans_dim, self.arch_n[- (idx + 2)],
                            activ=self.activ, pool='up_stride'))
         self.dec.append(Conv_Block(self.concat[0] * self.arch, self.arch, activ=self.activ))
         self.layers.append(Conv_Layer(self.arch, self.out_ch, 1, 1, norm=None, activ='tanh'))
@@ -129,7 +136,6 @@ class UnetWithTransformer(nn.Module):
         _, h = self.mid(h)
 
         # Apply the transformer block here
-        print('Before self.transformer()')
         h = self.transformer(h)
 
         for l_idx in range(len(self.dec)):
