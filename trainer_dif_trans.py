@@ -44,6 +44,7 @@ class TrainerMultiple(nn.Module):
         else:
             self.device = torch.device('cpu')
 
+        torch.cuda.empty_cache()
         self.train_loss = []
         self.train_corr_r = None
         self.train_corr_f = None
