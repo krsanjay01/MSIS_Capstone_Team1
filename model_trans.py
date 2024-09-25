@@ -14,6 +14,7 @@ class TransformerBlock(nn.Module):
     def forward(self, x):
         # Assuming input shape is (batch_size, channels, height, width)
         b, c, h, w = x.size()
+        print('x.size()', x.size())
         x = x.view(b, c, h * w).permute(2, 0, 1)  # Reshape to (sequence_length, batch_size, embedding_dim)
         x = self.positional_encoding(x)
         x = self.transformer(x)
