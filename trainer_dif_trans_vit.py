@@ -92,6 +92,7 @@ class TrainerMultiple(nn.Module):
         # Initialize VisionTransformer
         self.unet = VisionTransformer(self.config, img_size=self.config.img_size, num_classes=self.config.num_classes,
                                       zero_head=True).to(self.device)
+        print('pretrained_path = ' + self.config.pretrained_path)
         self.unet.load_from(weights=np.load(self.config.pretrained_path))
         # Optimizer with different learning rates for different parts of the model
         encoder_params = []
