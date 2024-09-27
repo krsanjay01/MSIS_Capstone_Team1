@@ -156,11 +156,22 @@ class TrainerMultiple(nn.Module):
         dmy = self.prep_noise().to(self.device)
         out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
 
-        corr = self.corr_fun(out, residuals)
+        #corr = self.corr_fun(out, residuals)
 
-        loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
+        #loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
+
+        # Calculate a simpler MSE loss to debug
+        # Match dimensions of out and residuals
+        out = F.interpolate(out, size=residuals.shape[2:], mode='bilinear', align_corners=False)
+        loss = self.loss_mse(out, residuals)
 
         loss.backward()
+
+        # Print gradient statistics
+        for name, param in self.unet.named_parameters():
+            if param.grad is not None:
+                print(
+                    f"Layer: {name} | Grad Mean: {param.grad.abs().mean().item()} | Grad Max: {param.grad.abs().max().item()}")
 
         # Apply gradient clipping to stabilize training
         torch.nn.utils.clip_grad_norm_(self.unet.parameters(), max_norm=1.0)
@@ -170,6 +181,7 @@ class TrainerMultiple(nn.Module):
         # Update the learning rate scheduler based on the current loss
         self.scheduler.step(loss)
 
+        print(f"Training Loss: {loss.item()}")
         # Update fingerprint
         if self.fingerprint is None:
             self.fingerprint = out[0:1].detach().to(self.device)
