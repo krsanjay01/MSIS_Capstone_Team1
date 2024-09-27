@@ -134,37 +134,38 @@ class TrainerMultiple(nn.Module):
         return relu(loss)
 
     def train_step(self, images, labels):
-
         # Ensure the images and labels are moved to the correct device and have the right type
-        images = images.to(self.device)
-        labels = labels.to(self.device)
+        images = images.to(self.device).float()  # Convert to float32
+        labels = labels.to(self.device).float()  # Convert to float32
 
         self.unet.train()
         self.optimizer.zero_grad()
 
-        # Ensure residuals are on the correct device
-        residuals = self.denoiser.denoise(images).detach().to(self.device)
+        # Ensure residuals are on the correct device and in float32
+        residuals = self.denoiser.denoise(images).detach().to(self.device).float()
 
-        alpha = (1 - self.alpha) * torch.rand((len(images), 1, 1, 1)).to(self.device) + self.alpha
+        # Calculate alpha and apply it to residuals
+        alpha = (1 - self.alpha) * torch.rand((len(images), 1, 1, 1), device=self.device).float() + self.alpha
         residuals = alpha * residuals
 
-        f_mean = residuals[labels.bool()].mean(0, keepdims=True).to(self.device)
-        r_mean = residuals[~labels.bool()].mean(0, keepdims=True).to(self.device)
+        # Calculate means of real and fake residuals
+        f_mean = residuals[labels.bool()].mean(0, keepdims=True).to(self.device).float()
+        r_mean = residuals[~labels.bool()].mean(0, keepdims=True).to(self.device).float()
 
-        residuals = torch.cat((residuals, f_mean, r_mean), dim=0)
+        # Concatenate residuals with means
+        residuals = torch.cat((residuals, f_mean, r_mean), dim=0).float()
 
-        dmy = self.prep_noise().to(self.device)
-        out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device)
+        # Prepare noise and generate model output
+        dmy = self.prep_noise().to(self.device).float()
+        out = self.unet(dmy).repeat(len(images) + 2, 1, 1, 1).to(self.device).float()
 
-        #corr = self.corr_fun(out, residuals)
-
-        #loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
-
-        # Calculate a simpler MSE loss to debug
-        # Match dimensions of out and residuals
+        # Resize 'out' to match 'residuals' size for MSE loss calculation
         out = F.interpolate(out, size=residuals.shape[2:], mode='bilinear', align_corners=False)
+
+        # Calculate MSE loss between output and residuals
         loss = self.loss_mse(out, residuals)
 
+        # Perform backpropagation
         loss.backward()
 
         # Print gradient statistics
@@ -176,19 +177,21 @@ class TrainerMultiple(nn.Module):
         # Apply gradient clipping to stabilize training
         torch.nn.utils.clip_grad_norm_(self.unet.parameters(), max_norm=1.0)
 
+        # Optimizer step
         self.optimizer.step()
 
         # Update the learning rate scheduler based on the current loss
         self.scheduler.step(loss)
 
         print(f"Training Loss: {loss.item()}")
+
         # Update fingerprint
         if self.fingerprint is None:
             self.fingerprint = out[0:1].detach().to(self.device)
         else:
-            self.fingerprint = (
-                        self.fingerprint * 0.99 + out[0:1].detach().to(self.device) * (1 - 0.99))
+            self.fingerprint = (self.fingerprint * 0.99 + out[0:1].detach().to(self.device) * (1 - 0.99))
 
+        # Calculate and track correlations
         corr = self.corr_fun(self.fingerprint.repeat(len(images), 1, 1, 1), residuals[:-2]).mean((1, 2, 3))
 
         self.train_loss.append(loss.item())
@@ -202,6 +205,8 @@ class TrainerMultiple(nn.Module):
             corr_f = corr[labels.bool()]
             self.train_corr_r.append(corr_r.mean().item())
             self.train_corr_f.append(corr_f.mean().item())
+
+        return loss.item()
 
     def reset_test(self):
         self.test_corr_r = None
