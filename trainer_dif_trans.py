@@ -162,8 +162,9 @@ class TrainerMultiple(nn.Module):
         # Resize 'out' to match 'residuals' size for MSE loss calculation
         out = F.interpolate(out, size=residuals.shape[2:], mode='bilinear', align_corners=False)
 
-        # Calculate MSE loss between output and residuals
-        loss = self.loss_mse(out, residuals)
+        corr = self.corr_fun(out, residuals)
+
+        loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
 
         # Perform backpropagation
         loss.backward()
