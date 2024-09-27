@@ -168,12 +168,6 @@ class TrainerMultiple(nn.Module):
         # Perform backpropagation
         loss.backward()
 
-        # Print gradient statistics
-        for name, param in self.unet.named_parameters():
-            if param.grad is not None:
-                print(
-                    f"Layer: {name} | Grad Mean: {param.grad.abs().mean().item()} | Grad Max: {param.grad.abs().max().item()}")
-
         # Apply gradient clipping to stabilize training
         torch.nn.utils.clip_grad_norm_(self.unet.parameters(), max_norm=1.0)
 
