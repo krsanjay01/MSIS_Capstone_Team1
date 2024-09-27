@@ -83,9 +83,9 @@ class TrainerMultiple(nn.Module):
             decoder_params += list(layer.parameters())
 
         # Optimizer setup
-        self.optimizer = optim.AdamW([
-            {'params': encoder_params, 'lr': 1e-4},  # Lower learning rate for UNet encoder
-            {'params': decoder_params, 'lr': 1e-4},  # Lower learning rate for UNet decoder
+        self.optimizer = optim.SGD([
+            {'params': encoder_params, 'lr': 1e-6},  # Lower learning rate for UNet encoder
+            {'params': decoder_params, 'lr': 1e-6},  # Lower learning rate for UNet decoder
         ], weight_decay=1e-5)
 
         # Initialize the learning rate scheduler
@@ -161,6 +161,10 @@ class TrainerMultiple(nn.Module):
         loss = self.loss_contrast(corr[:-2].mean((1, 2, 3)), labels).mean() / self.m
 
         loss.backward()
+
+        # Apply gradient clipping to stabilize training
+        torch.nn.utils.clip_grad_norm_(self.unet.parameters(), max_norm=1.0)
+
         self.optimizer.step()
 
         # Update the learning rate scheduler based on the current loss

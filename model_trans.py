@@ -52,7 +52,7 @@ class UnetWithTransformer(nn.Module):
             self.enc.append(
                 Conv_Block(self.arch_n[idx], self.arch_n[idx + 1], activ=self.activ, pool='down_max',use_transformer=False))
 
-        self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride',use_transformer=False)]
+        self.layers = [Conv_Block(self.arch_n[-1], self.arch_n[-1], activ=self.activ, pool='up_stride',use_transformer=True)]
 
         for idx in range(len(self.arch_n) - 2):
             self.dec.append(
