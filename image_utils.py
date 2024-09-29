@@ -95,7 +95,7 @@ def compress_jpeg(input_dir, output_dir, compression_level):
                 # Compress the image using JPEG with quality level of 75
                 img.save(compressed_path, format="JPEG", quality=compression_level)
 
-    print('All images have been compressed to JPEG 75.')
+    print(f'All images have been compressed to JPEG {compression_level}')
 
 def main():
     if len(sys.argv) != 5:
