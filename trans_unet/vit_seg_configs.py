@@ -15,7 +15,7 @@ def get_b16_config():
     config.classifier = 'seg'
     config.representation_size = None
     config.resnet_pretrained_path = None
-    config.pretrained_path = '/content/drive/MyDrive/model/imagenet21k_ViT-B_16.npz'
+    config.pretrained_path = '../model/imagenet21k_ViT-B_16.npz'
     #config.pretrained_path = 'model/vit_checkpoint/imagenet21k/imagenet21K_ViT-B_16.npz'
     config.patch_size = 16
 
@@ -51,7 +51,7 @@ def get_r50_b16_config():
     config.resnet.width_factor = 1
 
     config.classifier = 'seg'
-    config.pretrained_path = '/content/drive/MyDrive/model/imagenet21k_R50+ViT-B_16.npz'
+    config.pretrained_path = '../model/imagenet21k_R50+ViT-B_16.npz'
     config.decoder_channels = (256, 128, 64, 16)
     config.skip_channels = [512, 256, 64, 16]
     config.n_classes = 3
