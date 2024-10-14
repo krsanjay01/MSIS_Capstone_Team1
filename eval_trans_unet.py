@@ -44,8 +44,6 @@ def test_dif_directory(args: argparse.Namespace) -> (float, float):
     device_name = "cpu"
     if torch.cuda.is_available():
         device_name = "cuda"
-    elif torch.backends.mps.is_available():
-        device_name = "mps"
 
     hyper_pars['Device'] = torch.device(device_name)
     hyper_pars['Batch Size'] = args.batch
