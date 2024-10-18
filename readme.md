@@ -2,7 +2,7 @@
 Synthetic vs. Real Image Detection
 </h1> 
 
-<p align="center"> <a href="https://www.linkedin.com/in/serge2020/">Jojy Alex</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp<a href="https://www.ohadf.com/">Manish Singh</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp<a href="https://www.linkedin.com/in/serge2020/">Sanjay Krishnaswami</a>
+<p align="center"> <a href="https://www.linkedin.com/in/jojyalex/">Jojy Alex</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp<a href="https://www.linkedin.com/in/manish-singh-6a46b7108/">Manish Singh</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp<a href="https://www.linkedin.com/in/sanjaykrishnaswami/">Sanjay Krishnaswami</a>
 
 <p align="center"><a href="https://github.com/krsanjay01/MSIS_Capstone_Team1">Project Page</a>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href=https://console.cloud.google.com/storage/browser/_details/vit_models/imagenet21k/R50%2BViT-B_16.npz">Pre-trained Model</a> </p>
 
@@ -49,7 +49,7 @@ model directory will be used to store the extracted fingerprints.
 Example for Mixed Images model:
 
 ```
-python train_dif.py data/artifact/mixed/train checkpoint/artifact/mixed/uncompressed
+python train_dif.py data/artifact/mixed/train checkpoint/artifact/dif/mixed/uncompressed --e=200 --tr=1024
 ```
 
 #### Testing the Model
@@ -62,23 +62,23 @@ To reproduce the results per model run `eval_dif.py` and specify fingerprint dir
 Example for Mixed Images model:
 
 ```
-python eval_dif.py checkpoint/artifact/mixed/uncompressed data/artifact/mixed/test
+python eval_dif.py checkpoint/artifact/dif/mixed/uncompressed data/artifact/mixed/test
 ```
 #### <h2>TransUNet Classifier
 
-You can train and test the model for the Deep Image Fingerprint (DIF) model. We have provided the checkpoint for the Mixed 
+You can train and test the model for the TransUNet Classifier model. We have provided the checkpoint for the Mixed 
 uncompressed image dataset. You can test any dataset using this or train the model using other datasets.
 
 #### Training the Model
 
-To run `train_dif.py`, you need to specify the data directory and the model directory.
+To run `train_trans_unet.py`, you need to specify the data directory and the model directory.
 The data directory should include two subdirectories: `train` and `test`. Each of these directories should contain two subdirectories: `0_real` and `1_fake`, for real and fake images, respectively. The
 model directory will be used to store the extracted fingerprints.
 
 Example for Mixed Images model:
 
 ```
-python train_dif.py data/artifact/mixed/train checkpoint/artifact/mixed/uncompressed
+python train_trans_unet.py data/artifact/mixed/train checkpoint/artifact/tran_classifier/mixed/uncompressed --epochs=25 --crop_size=224 --train_size=1024
 ```
 
 #### Testing the Model
@@ -87,28 +87,29 @@ We included models for the Mixed uncompressed image dataset.
 In both cases models were trained with 1024 real and 1024 fake images. In addition, we provide all 15 datasets we tested with in the
 in `/data/artifact` folder
 
-To reproduce the results per model run `eval_dif.py` and specify fingerprint directory and data directory.
+To reproduce the results per model run `eval_trans_unet.py` and specify fingerprint directory and data directory.
 Example for Mixed images model:
 
 ```
-python eval_dif.py checkpoint/artifact/mixed/uncompressed data/artifact/mixed/test
+python eval_trans_unet.py checkpoint/artifact/trans_classifier/mixed/uncompressed data/artifact/mixed/test
 ```
 
 #### <h2>TransUNet Fingerprint
 
-You can train and test the model for the Deep Image Fingerprint (DIF) model. We have provided the checkpoint for the Mixed 
-uncompressed image dataset. You can test any dataset using this or train the model using other datasets.
+You can train and test the model for the TransUNet Fingerprint (DIF) model. We have provided the checkpoint for the Mixed 
+uncompressed image dataset. You can test any dataset using this or train the model using other datasets. This model does not converge and you
+will see that the training loss does not reduce.
 
 #### Training the Model
 
-To run `train_dif.py`, you need to specify the data directory and the model directory.
+To run `train_dif_trans_vit.py`, you need to specify the data directory and the model directory.
 The data directory should include two subdirectories: `train` and `test`. Each of these directories should contain two subdirectories: `0_real` and `1_fake`, for real and fake images, respectively. The
 model directory will be used to store the extracted fingerprints.
 
 Example for Mixed Images model:
 
 ```
-python train_dif.py data/artifact/mixed/train checkpoint/artifact/mixed/uncompressed
+python train_dif_trans_vit.py data/artifact/mixed/train checkpoint/artifact/trans_fingerprint/mixed/uncompressed --e=200 --tr=1024
 ```
 
 #### Testing the Model
@@ -121,5 +122,5 @@ To reproduce the results per model run `eval_dif.py` and specify fingerprint dir
 Example for Mixed images model:
 
 ```
-python eval_dif.py checkpoint/artifact/mixed/uncompressed data/artifact/mixed/test
+python eval_dif.py checkpoint/artifact/trans_fingerprint/mixed/uncompressed data/artifact/mixed/test
 ```
