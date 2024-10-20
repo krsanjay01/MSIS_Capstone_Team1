@@ -298,7 +298,7 @@ class Conv2dReLU(nn.Sequential):
         super(Conv2dReLU, self).__init__(conv, bn, relu)
 
 
-class DecoderBlock(nn.Module):
+'''class DecoderBlock(nn.Module):
     def __init__(
             self,
             in_channels,
@@ -336,17 +336,17 @@ class DecoderBlock(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         return x
+'''
 
-
-class SegmentationHead(nn.Sequential):
+'''class SegmentationHead(nn.Sequential):
 
     def __init__(self, in_channels, out_channels, kernel_size=3, upsampling=1):
         conv2d = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=kernel_size // 2)
         upsampling = nn.UpsamplingBilinear2d(scale_factor=upsampling) if upsampling > 1 else nn.Identity()
         super().__init__(conv2d, upsampling)
+'''
 
-
-class DecoderCup(nn.Module):
+'''class DecoderCup(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -396,7 +396,7 @@ class DecoderCup(nn.Module):
                 skip = None
             x = decoder_block(x, skip=skip)
         return x
-
+'''
 
 class VisionTransformer(nn.Module):
     def __init__(self, config, img_size=224, num_classes=21843, zero_head=False, vis=False):
