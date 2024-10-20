@@ -4,7 +4,7 @@ Synthetic vs. Real Image Detection
 
 <p align="center"> <a href="https://www.linkedin.com/in/jojyalex/">Jojy Alex</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp<a href="https://www.linkedin.com/in/manish-singh-6a46b7108/">Manish Singh</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp<a href="https://www.linkedin.com/in/sanjaykrishnaswami/">Sanjay Krishnaswami</a>
 
-<p align="center"><a href="https://github.com/krsanjay01/MSIS_Capstone_Team1">Project Page</a>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href=https://console.cloud.google.com/storage/browser/_details/vit_models/imagenet21k/R50%2BViT-B_16.npz">Pre-trained Model</a> </p>
+<p align="center"><a href="https://github.com/krsanjay01/MSIS_Capstone_Team1">Project Page</a>  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="https://console.cloud.google.com/storage/browser/vit_models/imagenet21k?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))"">Pre-trained Model</a> </p>
 
 
 
@@ -26,7 +26,9 @@ Synthetic vs. Real Image Detection
 
 This project was tested using Python 3.10 with a GPU. However, it is not necessary to have a GPU for the testing
 process.
-The required dependencies are specified in the `requirements.txt` file.
+The required dependencies are specified in the `requirements.txt` file. The pre-trained Vision Transformer needs
+to be downloaded and installed. The link to the download page is <a href="https://console.cloud.google.com/storage/browser/vit_models/imagenet21k?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))">here </a>
+After downloading the R50+ViT-B_16.npz mode, update the path in the `/trans_unet/vit_seg_configs_classifier.py` file.
 
 ### Usage
 
